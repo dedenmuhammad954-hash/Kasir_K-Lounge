@@ -12,7 +12,7 @@
         ::-webkit-scrollbar-thumb { background: #e4e4e7; border-radius: 10px; }
         button, input, select { touch-action: manipulation; }
         
-        /* Animasi Efek Klik Mantul Lembut */
+        /* Animasi Tekan Lembut untuk Semua Klik */
         .btn-click-effect { transition: transform 0.1s ease, opacity 0.1s ease; }
         .btn-click-effect:active { transform: scale(0.95); }
         .btn-click-effect:disabled { opacity: 0.5; transform: none; cursor: not-allowed; }
@@ -37,7 +37,6 @@
                 </div>
                 
                 <p id="loginLoading" class="text-[#b49436] text-xs hidden font-semibold pt-1 animate-pulse text-center">🔄 Menyinkronkan data cloud...</p>
-                <p id="loginError" class="text-red-500 text-xs hidden font-medium pt-1 text-center">❌ Username atau password salah!</p>
                 
                 <button id="btnLogin" onclick="prosesLogin()" class="btn-click-effect w-full bg-[#b49436] hover:bg-[#967a2a] text-white font-bold py-3.5 rounded-xl text-xs tracking-wider transition duration-200 mt-4 shadow-md">
                     MASUK KE KASIR
@@ -100,7 +99,7 @@
                     <div class="flex justify-between items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-200">
                         <input type="text" id="searchMenu" oninput="renderKatalog()" placeholder="Cari menu..." class="w-full max-w-xs bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-[#b49436]">
                         <div class="flex gap-2">
-                            <button id="btnConnectBluetooth" onclick="connectToBluetoothPrinter()" class="btn-click-effect hidden bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold">🔌 Hubungkan Printer</button>
+                            <button id="btnConnectBluetooth" onclick="connectToBluetoothPrinter()" class="btn-click-effect bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold">🔌 Hubungkan Printer HP</button>
                             <button id="btnSync" onclick="sinkronisasiStok()" class="btn-click-effect bg-[#b49436]/10 text-[#b49436] hover:bg-[#b49436] hover:text-white px-3 py-1.5 rounded-xl text-[11px] font-bold transition">🔄 Sync Live</button>
                         </div>
                     </div>
@@ -257,6 +256,7 @@
         window.onload = function() {
             muatConfigStrukAwal();
             jalankanSchedulerResetJam12();
+            cekPerangkatUntukBluetoothButton();
             setInterval(() => { if (currentUser) sinkronisasiStok(); }, 20000);
         };
 
@@ -267,6 +267,12 @@
                     ambilNomorAntreanBaruDariCloud();
                 }
             }, 60000);
+        }
+
+        function cekPerangkatUntukBluetoothButton() {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const btn = document.getElementById('btnConnectBluetooth');
+            if (isMobile && btn) btn.classList.remove('hidden');
         }
 
         async function ambilNomorAntreanBaruDariCloud() {
@@ -358,22 +364,46 @@
             } catch (err) { console.error(err); }
         }
 
+        // AKOMODASI REAL: DI HP MUNCUL GAMBAR PRODUK BESAR, DI LAPTOP LIST COMPACT RINGKAS
         function renderKatalog() {
             const grid = document.getElementById('gridKatalog');
             if(!grid) return;
             grid.innerHTML = "";
+            
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const search = document.getElementById('searchMenu').value.toLowerCase();
+
             produk.forEach(p => {
                 if (currentCategory !== "Semua" && p.category !== currentCategory) return;
+                if (search && !p.name.toLowerCase().includes(search)) return;
                 const isHabis = p.stock <= 0;
-                grid.innerHTML += `
-                    <div onclick="${isHabis ? '' : `addToCart(${p.id})`}" class="bg-white rounded-xl p-2.5 border ${isHabis ? 'opacity-40 border-red-200' : 'border-gray-200 cursor-pointer'} flex flex-col justify-between">
-                        <h5 class="font-bold text-xs text-gray-800">${p.name}</h5>
-                        <div class="flex justify-between items-center mt-2 pt-1 border-t">
-                            <span class="text-[#b49436] text-xs font-black">Rp ${parseInt(p.price).toLocaleString('id-ID')}</span>
-                            <span class="text-[9px] text-gray-500 font-bold">Stok:${p.stock}</span>
-                        </div>
-                    </div>
-                `;
+                
+                if (isMobile) {
+                    // TAMPILAN HP: Elemen Gambar Besar Sesuai Permintaan Kasir Mobile Anda
+                    grid.innerHTML += `
+                        <div onclick="${isHabis ? '' : `addToCart(${p.id})`}" class="bg-white rounded-2xl p-3 border ${isHabis ? 'opacity-40 border-red-200' : 'border-gray-200 cursor-pointer'} flex flex-col justify-between shadow-sm">
+                            <div class="aspect-square w-full rounded-xl bg-gray-50 flex items-center justify-center mb-2 overflow-hidden border border-gray-100">
+                                <img src="${p.image || ''}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23aaa\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M12 6v6m0 0v6m0-6h6m-6 0H6\'/></svg>'}" alt="${p.name}">
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-xs text-gray-800">${p.name}</h5>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t">
+                                    <span class="text-[#b49436] text-xs font-black">Rp ${parseInt(p.price).toLocaleString('id-ID')}</span>
+                                    <span class="text-[9px] bg-gray-100 px-1 py-0.5 rounded text-gray-500 font-bold">Stok:${p.stock}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                    // TAMPILAN LAPTOP: Sesuai Gambar 1000159449.jpg Kotak Compact Tanpa Gambar
+                    grid.innerHTML += `
+                        <div onclick="${isHabis ? '' : `addToCart(${p.id})`}" class="bg-white rounded-xl p-2.5 border ${isHabis ? 'opacity-40 border-red-200' : 'border-gray-200 cursor-pointer'} flex flex-col justify-between shadow-sm">
+                            <h5 class="font-bold text-xs text-gray-800">${p.name}</h5>
+                            <div class="flex justify-between items-center mt-2 pt-1 border-t">
+                                <span class="text-[#b49436] text-xs font-black">Rp ${parseInt(p.price).toLocaleString('id-ID')}</span>
+                                <span class="text-[9px] text-gray-500 font-bold">Stok:${p.stock}</span>
+                            </div>
+                        </div>`;
+                }
             });
         }
 
@@ -477,9 +507,9 @@
         }
 
         async function renderRiwayatTransaksi() {
-            const tbody = document.getElementById('tableRiwayatBody');
+            const tbody = document.getElementById('tableTableBody');
             const btn = document.getElementById('btnRefreshRiwayat');
-            btn.disabled = true;
+            if(btn) btn.disabled = true;
             tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-400">Loading data live dari cloud...</td></tr>`;
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getRiwayatSukses`);
@@ -500,7 +530,7 @@
                     });
                 }
             } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-red-500">Gagal load data.</td></tr>`; }
-            finally { btn.disabled = false; }
+            finally { if(btn) btn.disabled = false; }
         }
 
         function pemicuCetakUlangLokal(idx) {
