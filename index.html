@@ -271,7 +271,7 @@
         let currentMethod = "CASH"; let currentUser = null; let totalBelanjaGlobal = 0;
         let lokalOmzet = 0; let lokalQty = 0;
         let bluetoothCharacteristic = null;
-        let base64LogoFotoData = ""; // Penampung string biner base64 gambar logo toko
+        let base64LogoFotoData = "";
 
         window.onload = function() {
             generateNewQueueNumber();
@@ -280,7 +280,6 @@
             setInterval(() => { if (currentUser) sinkronisasiStok(); }, 15000);
         };
 
-        // ENCODER FOTO KELAS KASIR: Proses konversi foto .png/.jpg ke memori internal
         function handleLogoUpload(input) {
             const file = input.files[0];
             if (!file) return;
@@ -290,18 +289,12 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
-                    // Skala rasio lebar printer thermal portabel 58mm
                     const maxW = 200;
                     const scale = maxW / img.width;
                     canvas.width = maxW;
                     canvas.height = img.height * scale;
-                    
-                    // Render kompresi
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     base64LogoFotoData = canvas.toDataURL('image/jpeg', 0.8);
-                    
-                    // Update preview box visual
                     const view = document.getElementById('imgLogoPreview');
                     view.src = base64LogoFotoData;
                     view.classList.remove('hidden');
@@ -647,7 +640,6 @@
             updateCart(); switchView('kasir');
         }
 
-        // FUNGSI PENDUKUNG MATRIKS GAMBAR: Merubah file biner Base64 gambar ke Format Command ESC/POS Printer Thermal Bluetooth
         function dapatkanBinerCommandPrinterDariBase64(base64Str, callback) {
             const img = new Image();
             img.onload = function() {
@@ -659,13 +651,11 @@
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 
                 const binerBaris = [];
-                // Format inisialisasi cetak gambar ESC/POS: GS v 0 p xL xH yL yH
                 const xL = Math.floor(canvas.width / 8) % 256;
                 const xH = Math.floor(Math.floor(canvas.width / 8) / 256);
                 const yL = canvas.height % 256;
                 const yH = Math.floor(canvas.height / 256);
                 
-                // Header command gambar printer thermal portabel
                 binerBaris.push(29, 118, 48, 0, xL, xH, yL, yH);
 
                 for (let y = 0; y < canvas.height; y++) {
@@ -678,21 +668,20 @@
                             const g = imgData.data[index+1];
                             const b = imgData.data[index+2];
                             const kegelapan = (r + g + b) / 3;
-                            if (kegelapan < 128) { // Jika pixel gelap, aktifkan jarum printer hitam
+                            if (kegelapan < 128) {
                                 byteKertas |= (1 << (7 - bit));
                             }
                         }
                         binerBaris.push(byteKertas);
                     }
                 }
-                // Tambahkan enter line feed setelah gambar selesai
-                binerBaris.push(10, 10);
+                binerBaris.push(10);
                 callback(new Uint8Array(binerBaris));
             };
             img.src = base64Str;
         }
 
-        /* INTEGRASI MODUL FINAL: CETAK STRUK ADAPTIF DENGAN UPLOAD FOTO LOGO ASLI */
+        /* 👑 DEAL FIX PERBAIKAN TOTAL: SPASI LAYOUT INFO RAPAT & ENTER DIPANGKAS HABIS */
         async function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -708,40 +697,41 @@
             const txtP3 = localStorage.getItem('s_p3') || "kembali";
             const txtPenutup = localStorage.getItem('s_penutup') || "Terimakasih sudah menjadi bagian dari Angkringan K-Lounge";
 
-            // FORMAT TEXT DETAIL BELANJA UNTUK HP
+            // Format Item Rapat Sesuai Lebar Maksimal 32 Karakter Kertas 58mm
             let itemRowsText = "";
             cart.forEach(i => {
-                itemRowsText += `${i.name}\n  ${String(i.qty).padEnd(2)} x ${parseInt(i.price).toLocaleString('id-ID').padEnd(7)} = ${String(parseInt(i.price * i.qty).toLocaleString('id-ID')).padStart(13)}\n`;
+                itemRowsText += `${i.name}\n  ${String(i.qty).padEnd(2)} x ${parseInt(i.price).toLocaleString('id-ID').padEnd(6)} = ${String((i.price * i.qty).toLocaleString('id-ID')).padStart(12)}\n`;
             });
 
             const centerText = (text) => {
                 const len = text.length;
-                if (len >= 33) return text.substring(0, 33) + "\n";
-                const pad = Math.floor((33 - len) / 2);
+                if (len >= 32) return text.substring(0, 32) + "\n";
+                const pad = Math.floor((32 - len) / 2);
                 return " ".repeat(pad) + text + "\n";
             };
 
+            // PERBAIKAN: Spasi titik dua dibuat rapat sejajar, enter dipotong padat, desimal ribuan bulat bersih (.00 dibuang)
             let teksStrukMentahTanpaLogo = 
                 centerText(txtNamaToko) +
                 centerText(txtAlamat) +
                 centerText(txtTelp) +
-                `---------------------------------\n` +
-                `No Antrian : ${qNum.padEnd(20)}\n` +
-                `Pelanggan  : ${customerName.toUpperCase().padEnd(20)}\n` +
-                `Waktu      : ${formattedDate.padEnd(20)}\n` +
-                `Kasir      : ${cashierName.toUpperCase().padEnd(20)}\n` +
-                `---------------------------------\n` +
+                `--------------------------------\n` +
+                `No Antrian: ${qNum}\n` +
+                `Pelanggan : ${customerName.toUpperCase()}\n` +
+                `Waktu     : ${formattedDate}\n` +
+                `Kasir     : ${cashierName.toUpperCase()}\n` +
+                `--------------------------------\n` +
                 itemRowsText +
-                `---------------------------------\n` +
-                `Total Tagihan       :${String(total.toLocaleString('id-ID')).padStart(13)}\n` +
-                `Uang Diterima       :${String(uangDiterima.toLocaleString('id-ID')).padStart(13)}\n` +
-                `Kembalian           :${String(kembalian < 0 ? 0 : kembalian.toLocaleString('id-ID')).padStart(13)}\n` +
-                `---------------------------------\n` +
+                `--------------------------------\n` +
+                `Total Tagihan  : ${String(total.toLocaleString('id-ID')).padStart(14)}\n` +
+                `Uang Diterima  : ${String(uangDiterima.toLocaleString('id-ID')).padStart(14)}\n` +
+                `Kembalian      : ${String(kembalian < 0 ? 0 : kembalian.toLocaleString('id-ID')).padStart(14)}\n` +
+                `--------------------------------\n` +
                 `Metode Bayar (${payType.padEnd(4)})     Rp${parseInt(total).toLocaleString('id-ID')}\n\n` +
-                `              LUNAS              \n\n` +
+                `             LUNAS              \n\n` +
                 (txtP1 ? centerText(txtP1) : "") +
                 (txtP2 ? centerText(txtP2) : "") +
-                (txtP3 ? centerText(txtP3) : "") + `\n` +
+                (txtP3 ? centerText(txtP3) : "") +
                 centerText(txtPenutup) + "\n\n\n\n";
 
             const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -755,21 +745,17 @@
                     const textEncoder = new TextEncoder();
                     const chunk = 20;
 
-                    // JIKA ADA FILE FOTO LOGO: Proses cetak gambar matriks biner terlebih dahulu
                     if (base64LogoFotoData) {
                         dapatkanBinerCommandPrinterDariBase64(base64LogoFotoData, async function(bytesGambar) {
-                            // Kirim pecahan biner gambar logo
                             for (let i = 0; i < bytesGambar.length; i += chunk) {
                                 await bluetoothCharacteristic.writeValue(bytesGambar.slice(i, i + chunk));
                             }
-                            // Lanjutkan kirim teks rincian struk belanja
                             const binerTeks = textEncoder.encode(teksStrukMentahTanpaLogo);
                             for (let i = 0; i < binerTeks.length; i += chunk) {
                                 await bluetoothCharacteristic.writeValue(binerTeks.slice(i, i + chunk));
                             }
                         });
                     } else {
-                        // Jika tidak upload foto, langsung tembak teks struk biasa
                         const binerTeks = textEncoder.encode(teksStrukMentahTanpaLogo);
                         for (let i = 0; i < binerTeks.length; i += chunk) {
                             await bluetoothCharacteristic.writeValue(binerTeks.slice(i, i + chunk));
@@ -781,13 +767,13 @@
                     document.getElementById('btnConnectBluetooth').innerText = "🔌 Hubungkan Printer HP";
                 }
             } else {
-                // TAMPILAN DRIVER PRINT UNTUK JENDELA LAPTOP
+                // DRIVER PRINT LAPTOP (HTML/CSS) - IKUT MERAPATKAN JARAK DAN DATA
                 const pWin = window.open('', '_blank', 'width=320,height=620');
                 let itemRowsHtml = "";
                 cart.forEach(i => {
                     itemRowsHtml += `
-                        <div style="font-size:12px; font-weight:bold; margin-top:4px;">${i.name}</div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                        <div style="font-size:12px; font-weight:bold; margin-top:2px;">${i.name}</div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
                             <span>&nbsp;&nbsp;${i.qty} &nbsp;x &nbsp;${parseInt(i.price).toLocaleString('id-ID')} =</span>
                             <span>${(i.price * i.qty).toLocaleString('id-ID')}</span>
                         </div>`;
@@ -795,37 +781,37 @@
 
                 pWin.document.write(`
                     <html>
-                    <body style="font-family:'Courier New',monospace; width:250px; margin:0 auto; padding:10px; color:#000;">
-                        <div style="text-align:center; font-size:13px; line-height:1.3;">
-                            ${base64LogoFotoData ? `<img src="${base64LogoFotoData}" style="max-width:140px; margin-bottom:8px; filter:grayscale(100%);"><br>` : ''}
-                            <b style="font-size:14px;">${txtNamaToko}</b><br>
+                    <body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:5px; color:#000;">
+                        <div style="text-align:center; font-size:13px; line-height:1.2;">
+                            ${base64LogoFotoData ? `<img src="${base64LogoFotoData}" style="max-width:140px; margin-bottom:4px; filter:grayscale(100%);"><br>` : ''}
+                            <b style="font-size:13px;">${txtNamaToko}</b><br>
                             ${txtAlamat}<br>
                             ${txtTelp}
                         </div>
-                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                        <div style="font-size:11px; line-height:1.4;">
-                            <div>No Antrian : ${qNum}</div>
-                            <div>Pelanggan  : ${customerName.toUpperCase()}</div>
-                            <div>Waktu      : ${formattedDate}</div>
-                            <div>Kasir      : ${cashierName.toUpperCase()}</div>
+                        <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+                        <div style="font-size:11px; line-height:1.3;">
+                            <div style="display:flex;"><span style="width:85px;">No Antrian</span><span>: ${qNum}</span></div>
+                            <div style="display:flex;"><span style="width:85px;">Pelanggan</span><span>: ${customerName.toUpperCase()}</span></div>
+                            <div style="display:flex;"><span style="width:85px;">Waktu</span><span>: ${formattedDate}</span></div>
+                            <div style="display:flex;"><span style="width:85px;">Kasir</span><span>: ${cashierName.toUpperCase()}</span></div>
                         </div>
-                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+                        <div style="border-top:1px dashed #000; margin:4px 0;"></div>
                         ${itemRowsHtml}
-                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Total Tagihan</span><span>${total.toLocaleString('id-ID')}</span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Uang Diterima</span><span>${uangDiterima.toLocaleString('id-ID')}</span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Kembalian</span><span>${(kembalian < 0 ? 0 : kembalian).toLocaleString('id-ID')}</span></div>
-                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>Metode Bayar (${payType})</span><span>Rp${parseInt(total).toLocaleString('id-ID')}</span></div>
+                        <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Total Tagihan</span><span>: ${total.toLocaleString('id-ID')}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Uang Diterima</span><span>: ${uangDiterima.toLocaleString('id-ID')}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Kembalian</span><span>: ${(kembalian < 0 ? 0 : kembalian).toLocaleString('id-ID')}</span></div>
+                        <div style="border-top:1px dashed #000; margin:4px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Metode Bayar (${payType})</span><span>Rp${parseInt(total).toLocaleString('id-ID')}</span></div>
                         
-                        <div style="text-align:center; margin-top:15px; font-size:13px; font-weight:bold;">LUNAS</div>
+                        <div style="text-align:center; margin-top:10px; font-size:12px; font-weight:bold;">LUNAS</div>
                         
-                        <div style="text-align:center; margin-top:12px; font-size:11px; line-height:1.3;">
+                        <div style="text-align:center; margin-top:8px; font-size:11px; line-height:1.2;">
                             ${txtP1 ? txtP1 + '<br>' : ''}
                             ${txtP2 ? txtP2 + '<br>' : ''}
                             ${txtP3 ? txtP3 : ''}
                         </div>
-                        <div style="text-align:center; margin-top:12px; font-size:11px; line-height:1.3;">
+                        <div style="text-align:center; margin-top:8px; font-size:11px; line-height:1.2;">
                             ${txtPenutup}
                         </div>
                         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
