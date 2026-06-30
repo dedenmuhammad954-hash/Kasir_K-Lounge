@@ -96,7 +96,6 @@
                             <span class="absolute right-2.5 top-2 text-gray-400 text-xs sm:text-sm">🔍</span>
                         </div>
                         
-                        <!-- PANEL BLUETOOTH ADAPTIF UNTUK HP -->
                         <div class="flex gap-2">
                             <button id="btnConnectBluetooth" onclick="connectToBluetoothPrinter()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/30 px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1">
                                 🔌 <span>Hubungkan Printer HP</span>
@@ -197,8 +196,33 @@
                 <div id="restrictedKasirNotice" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 text-center"><p class="text-sm font-bold text-red-700">🚫 Akses khusus untuk Owner saja.</p></div>
             </div>
 
-            <!-- VIEW 4: KEAMANAN -->
-            <div id="viewKeamanan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-xl w-full mx-auto">
+            <!-- VIEW 4: KEAMANAN & PENGATURAN STRUK KUSTOM (Kombinasi Baru) -->
+            <div id="viewKeamanan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-xl w-full mx-auto space-y-6">
+                <!-- MODUL BARU: KUSTOMISASI STRUK PRINTER -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md space-y-4">
+                    <h2 class="text-base font-black text-gray-800 border-b border-gray-100 pb-2 flex items-center gap-1.5">🖨️ KUSTOMISASI KATA STRUK KASIR</h2>
+                    
+                    <div class="space-y-3 text-left text-xs">
+                        <div>
+                            <label class="block text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Teks Header / Nama Bisnis</label>
+                            <input type="text" id="cfgStrukHeader" placeholder="ANGKRINGAN K-LOUNGE" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-2 font-bold focus:outline-none focus:border-[#b49436]">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Slogan / Sub-Header</label>
+                            <input type="text" id="cfgStrukSubHeader" placeholder="Premium Culinary Spot" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#b49436]">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Pesan Kaki Struk (Footer / Kebijakan Toko)</label>
+                            <textarea id="cfgStrukFooter" rows="3" placeholder="Terima kasih atas kunjungan Anda" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#b49436]"></textarea>
+                        </div>
+                        
+                        <button onclick="simpanKonfigurasiStokStruk()" class="w-full bg-[#b49436] hover:bg-[#967a2a] text-white font-black py-2.5 rounded-xl transition shadow-sm">
+                            💾 SIMPAN SETELAN STRUK
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECURITY LOCK RESET -->
                 <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md text-center space-y-4">
                     <h2 class="text-base font-black text-red-700">⚙️ BRUTE FORCE SECURITY SYSTEM</h2>
                     <button onclick="resetBlokirKasir()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl text-xs">🔓 RESET COUNTER LOGIN</button>
@@ -214,14 +238,29 @@
         let currentMethod = "CASH"; let currentUser = null; let totalBelanjaGlobal = 0;
         let lokalOmzet = 0; let lokalQty = 0;
         
-        // VARIABEL KHUSUS JALUR 2: WEB BLUETOOTH
         let bluetoothCharacteristic = null;
 
         window.onload = function() {
             generateNewQueueNumber();
             cekPerangkatUntukBluetoothButton();
+            muatKonfigurasiStrukLokal(); // Ambil setelan kustom teks struk saat web dimuat
             setInterval(() => { if (currentUser) sinkronisasiStok(); }, 15000);
         };
+
+        // Fungsi Membaca Setelan Struk Kustom dari localStorage Perangkat
+        function muatKonfigurasiStrukLokal() {
+            document.getElementById('cfgStrukHeader').value = localStorage.getItem('struk_header') || "ANGKRINGAN K-LOUNGE";
+            document.getElementById('cfgStrukSubHeader').value = localStorage.getItem('struk_sub_header') || "Premium Culinary Spot";
+            document.getElementById('cfgStrukFooter').value = localStorage.getItem('struk_footer') || "Terima kasih atas\nkunjungan Anda";
+        }
+
+        // Fungsi Menyimpan Setelan Struk Kustom
+        function simpanKonfigurasiStokStruk() {
+            localStorage.setItem('struk_header', document.getElementById('cfgStrukHeader').value.trim());
+            localStorage.setItem('struk_sub_header', document.getElementById('cfgStrukSubHeader').value.trim());
+            localStorage.setItem('struk_footer', document.getElementById('cfgStrukFooter').value.trim());
+            alert("✅ Konsep teks kustom struk berhasil disimpan permanen!");
+        }
 
         function cekPerangkatUntukBluetoothButton() {
             const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -231,7 +270,6 @@
 
         async function connectToBluetoothPrinter() {
             try {
-                // Menembak UUID standar untuk printer thermal Bluetooth portabel
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
                 });
@@ -243,7 +281,7 @@
                 document.getElementById('btnConnectBluetooth').className = "bg-emerald-800 text-white border border-transparent px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1";
             } catch (err) {
                 console.error(err);
-                alert("Gagal menyambungkan printer bluetooth, periksa apakah bluetooth HP sudah aktif.");
+                alert("Gagal menyambungkan printer bluetooth.");
             }
         }
 
@@ -507,7 +545,7 @@
             } catch (e) { container.innerHTML = "<p class='text-red-500 text-xs col-span-2'>Gagal memuat.</p>"; }
         }
 
-        function lanjutkanTransaksi(noAntrian, atasNama, items) {
+        function lanjutanTransaksi(noAntrian, atasNama, items) {
             cart = [];
             items.forEach(item => {
                 const masterProduct = produk.find(p => p.name.toLowerCase() === item.name.toLowerCase());
@@ -520,10 +558,15 @@
             updateCart(); switchView('kasir');
         }
 
-        /* PERBAIKAN FUNGSIONAL JALUR 2: WEB BLUETOOTH API BEBAS DARI ERROR OVERLAY ANDROID */
+        // INTEGRASI SINKRONISASI KATA KUSTOM STRUK
         async function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // Tarik data kustom teks dari localStorage
+            const txtHeader = localStorage.getItem('struk_header') || "ANGKRINGAN K-LOUNGE";
+            const txtSubHeader = localStorage.getItem('struk_sub_header') || "Premium Culinary Spot";
+            const txtFooter = localStorage.getItem('struk_footer') || "Terima kasih atas\nkunjungan Anda";
 
             let itemRowsText = "";
             cart.forEach(i => {
@@ -531,8 +574,8 @@
             });
 
             let teksStrukMentah = 
-                `   ANGKRINGAN K-LOUNGE   \n` +
-                `  Premium Culinary Spot   \n` +
+                `   ${txtHeader}   \n` +
+                `  ${txtSubHeader}   \n` +
                 `--------------------------\n` +
                 `No Antrian : ${qNum}\n` +
                 `Pelanggan  : ${customerName.toUpperCase()}\n` +
@@ -544,22 +587,18 @@
                 `TOTAL (${payType}) : Rp ${total.toLocaleString('id-ID')}\n` +
                 `--------------------------\n` +
                 `        *** LUNAS *** \n` +
-                ` Terima kasih atas \n` +
-                `   kunjungan Anda   \n\n\n\n`;
+                ` ${txtFooter} \n\n\n\n`;
 
             const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
             if (isMobileDevice) {
-                // METODE JALUR 2: Kirim biner data langsung dari Chrome ke Bluetooth Printer tanpa RawBT
                 if (!bluetoothCharacteristic) {
-                    alert("Printer Bluetooth belum tersambung!\nHarap klik tombol 'Hubungkan Printer HP' di bagian atas katalog menu terlebih dahulu.");
+                    alert("Printer Bluetooth belum tersambung!\nHarap klik tombol 'Hubungkan Printer HP' terlebih dahulu.");
                     return;
                 }
                 try {
                     const encoder = new TextEncoder();
                     const binerData = encoder.encode(teksStrukMentah);
-                    
-                    // Printer thermal portabel menerima data maksimal pecahan 20 byte per baris transfer
                     const chunk = 20;
                     for (let i = 0; i < binerData.length; i += chunk) {
                         await bluetoothCharacteristic.writeValue(binerData.slice(i, i + chunk));
@@ -571,15 +610,20 @@
                     document.getElementById('btnConnectBluetooth').className = "bg-emerald-600 text-white border border-transparent px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1";
                 }
             } else {
-                // JIKA DI COMPUTER/LAPTOP: Tetap pakai jendela driver bawaan normal
                 const pWin = window.open('', '_blank', 'width=320,height=620');
                 let itemRowsHtml = "";
                 cart.forEach(i => {
                     itemRowsHtml += `<div style="display:flex; justify-content:space-between; font-size:12px;"><span>${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}</span><span>${(i.price * i.qty).toLocaleString('id-ID')}</span></div><div style="font-size:12px; font-weight:bold; margin-bottom:6px;">${i.name}</div>`;
                 });
-                pWin.document.write(`<html><body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:10px;"><div style="text-align:center;"><h4>ANGKRINGAN K-LOUNGE</h4></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="font-size:11px;"><div>No Antrian : ${qNum}</div><div>Pelanggan  : ${customerName.toUpperCase()}</div><div>Waktu : ${formattedDate}</div><div>Kasir : ${cashierName.toUpperCase()}</div></div><div style="border-top:1px dashed #000; margin:6px 0;"></div>${itemRowsHtml}<div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>TOTAL (${payType})</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="text-align:center; margin-top:10px;"><h3>*** LUNAS ***</h3></div><script>window.onload = function(){ window.print(); window.close(); }<\/script></body></html>`);
+                pWin.document.write(`<html><body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:10px;"><div style="text-align:center;"><h4>${txtHeader}</h4><p style="font-size:11px;margin:2px 0;">${txtSubHeader}</p></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="font-size:11px;"><div>No Antrian : ${qNum}</div><div>Pelanggan  : ${customerName.toUpperCase()}</div><div>Waktu : ${formattedDate}</div><div>Kasir : ${cashierName.toUpperCase()}</div></div><div style="border-top:1px dashed #000; margin:6px 0;"></div>${itemRowsHtml}<div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>TOTAL (${payType})</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="text-align:center; margin-top:10px; font-size:11px;"><h3>*** LUNAS ***</h3><p style="white-space:pre-line;">${txtFooter}</p></div><script>window.onload = function(){ window.print(); window.close(); }<\/script></body></html>`);
                 pWin.document.close();
             }
+        }
+
+        function b64EncodeUnicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
         }
 
         async function muatDataLaporan() {
