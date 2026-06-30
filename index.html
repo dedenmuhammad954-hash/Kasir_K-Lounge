@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Angkringan K-Lounge - Premium POS System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f4f4f7; }
+        ::-webkit-scrollbar-thumb { background: #e4e4e7; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c4a446; }
+        button, input { touch-action: manipulation; }
+    </style>
+</head>
+<body class="bg-[#f8f9fa] text-[#2d3748] font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-[#c4a446] selection:text-white">
+
+    <!-- LOGIN GATE -->
+    <div id="loginGate" class="fixed inset-0 bg-[#f1f3f5] z-50 flex items-center justify-center p-4">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 w-full max-w-sm text-center shadow-xl">
+            <h2 class="text-xl sm:text-2xl font-black text-[#b49436] tracking-wider mb-1">ANGKRINGAN K-LOUNGE</h2>
+            <p class="text-[10px] text-gray-500 mb-6 font-medium uppercase tracking-widest">Premium POS Cloud System</p>
+            
+            <div id="loginFormContainer" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-[10px] text-gray-400 font-bold tracking-wider mb-1 uppercase">Username</label>
+                    <input type="text" id="usernameInput" placeholder="Masukkan username" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#b49436] transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-400 font-bold tracking-wider mb-1 uppercase">Password</label>
+                    <input type="password" id="passwordInput" placeholder="••••••••" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#b49436] transition">
+                </div>
+                
+                <p id="loginLoading" class="text-[#b49436] text-xs hidden font-semibold pt-1 animate-pulse text-center">🔄 Menyinkronkan data cloud...</p>
+                <p id="loginError" class="text-red-500 text-xs hidden font-medium pt-1 text-center">❌ Username atau password salah!</p>
+                
+                <button onclick="prosesLogin()" class="w-full bg-[#b49436] hover:bg-[#967a2a] text-white font-bold py-3.5 rounded-xl text-xs tracking-wider transition duration-200 mt-4 shadow-md">
+                    MASUK KE KASIR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" class="hidden flex-1 flex flex-col md:flex-row overflow-hidden h-screen w-screen">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 bg-[#1e2530] flex flex-col justify-between p-4 z-40 shadow-lg text-gray-300 border-b border-gray-700 md:border-b-0">
+            <div class="space-y-6">
+                <div class="flex md:flex-col justify-between items-center md:items-stretch border-b border-gray-700/50 pb-4 px-2">
+                    <div>
+                        <span class="font-black text-base tracking-wider text-[#e5c158] block">K-LOUNGE</span>
+                        <span id="userActiveDisplay" class="text-[11px] text-gray-400 block truncate mt-0.5">Kasir: -</span>
+                    </div>
+                    <span id="roleBadge" class="md:mt-2 inline-block bg-[#e5c158]/10 text-[#e5c158] border border-[#e5c158]/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-center">-</span>
+                </div>
+
+                <nav class="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 space-y-0 md:space-y-1.5">
+                    <button id="navKasir" onclick="switchView('kasir')" class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap">
+                        🪑 <span>POS Kasir</span>
+                    </button>
+                    <button id="navPending" onclick="switchView('pending')" class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap">
+                        ⏳ <span>Antrian Pending</span>
+                    </button>
+                    <button id="navLaporan" onclick="switchView('laporan')" class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap">
+                        📊 <span>Laporan Omzet</span>
+                    </button>
+                    <button id="navKeamanan" onclick="switchView('keamanan')" class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap hidden">
+                        ⚙️ <span>Security</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- KOTAK SESI MALAM INI -->
+            <div class="hidden md:block bg-gray-800/60 p-3 rounded-xl border border-gray-700/50 space-y-1.5 mx-1 my-3">
+                <span class="text-[10px] text-gray-400 font-bold tracking-wider block uppercase">Sesi Malam Ini</span>
+                <div class="flex justify-between text-xs"><span class="text-gray-400">Total Omzet:</span><b class="text-[#e5c158]" id="kasirLiveOmzet">Rp 0</b></div>
+                <div class="flex justify-between text-xs"><span class="text-gray-400">Goal Qty:</span><b class="text-white" id="kasirLiveQty">0 Item</b></div>
+            </div>
+
+            <div class="hidden md:block border-t border-gray-700/50 pt-4">
+                <button onclick="logout()" class="w-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl text-xs font-bold transition">Keluar</button>
+            </div>
+        </aside>
+
+        <!-- MAIN PANEL -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-[#f4f5f7]">
+            
+            <!-- VIEW 1: POS MAIN KASIR -->
+            <div id="viewKasir" class="grid grid-cols-1 lg:grid-cols-3 flex-1 overflow-hidden hidden">
+                <div class="lg:col-span-2 p-3 sm:p-5 overflow-y-auto flex flex-col gap-4">
+                    <div class="flex justify-between items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-200">
+                        <div class="relative w-full max-w-xs">
+                            <input type="text" id="searchMenu" oninput="renderKatalog()" placeholder="Cari menu..." class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl pl-3 pr-8 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-[#b49436]">
+                            <span class="absolute right-2.5 top-2 text-gray-400 text-xs sm:text-sm">🔍</span>
+                        </div>
+                        <button onclick="sinkronisasiStok()" class="bg-[#b49436]/10 text-[#b49436] hover:bg-[#b49436] hover:text-white border border-[#b49436]/30 px-3 py-1.5 rounded-xl text-[11px] font-bold transition">🔄 Sync Live</button>
+                    </div>
+                    
+                    <div class="flex gap-1.5 overflow-x-auto pb-2 border-b border-gray-200 no-scrollbar">
+                        <button onclick="filterKategori('Semua')" class="cat-btn bg-[#b49436] text-white px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition shadow-sm">🎯 Semua</button>
+                        <button onclick="filterKategori('Sate')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition">🍢 Sate</button>
+                        <button onclick="filterKategori('Cemilan')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition">🍟 Cemilan</button>
+                        <button onclick="filterKategori('Makanan')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition">🍛 Makanan</button>
+                        <button onclick="filterKategori('Kopi')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition">☕ Kopi</button>
+                        <button onclick="filterKategori('Non Kopi')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition">🥤 Non Kopi</button>
+                    </div>
+                    <div id="gridKatalog" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                </div>
+
+                <!-- KERANJANG UTAMA KASIR -->
+                <div class="bg-white border-t lg:border-t-0 lg:border-l border-gray-200 p-4 flex flex-col justify-between h-auto lg:h-full shadow-xl overflow-y-auto">
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
+                            <h4 class="font-black text-xs text-gray-800 tracking-wide flex items-center gap-1.5">🛒 LIST BELANJA <span id="cartCount" class="bg-[#b49436] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span></h4>
+                            <div class="text-right">
+                                <span class="text-[10px] bg-gray-100 border border-gray-200 text-gray-700 font-bold px-1.5 py-0.5 rounded" id="orderQueueNumber">P-0000</span>
+                                <span class="text-[10px] text-orange-600 font-bold block mt-0.5" id="labelAtasNama">👤 Walk-In Customer</span>
+                            </div>
+                        </div>
+                        <div id="cartItems" class="space-y-2 max-h-40 lg:max-h-none lg:flex-1 overflow-y-auto pr-1 mb-3"></div>
+                    </div>
+                    
+                    <div class="border-t border-gray-100 pt-3 space-y-3">
+                        <div>
+                            <label class="block text-[9px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Atas Nama / No. Meja</label>
+                            <input type="text" id="inputAtasNamaPelanggan" oninput="document.getElementById('labelAtasNama').innerText = '👤 ' + (this.value || 'Walk-In Customer')" placeholder="Contoh: Walk-in" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#b49436]">
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[9px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Metode Bayar</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="setMethod('CASH')" id="payCASH" class="bg-[#2d3748] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm">💵 CASH</button>
+                                    <button onclick="setMethod('QRIS')" id="payQRIS" class="bg-white text-gray-600 border border-gray-300 font-bold py-2 rounded-xl text-xs transition">📱 QRIS</button>
+                                </div>
+                            </div>
+                            <div id="kalkulatorCashBox" class="bg-amber-50/50 border border-amber-200 p-2.5 rounded-xl space-y-2">
+                                <div class="flex justify-between items-center gap-2">
+                                    <label class="text-[10px] text-amber-900 font-bold uppercase tracking-wider block">Uang Diterima:</label>
+                                    <input type="number" id="cashDiterimaInput" oninput="hitungKembalian()" placeholder="0" class="w-32 bg-white border border-amber-300 rounded-lg px-2 py-1 text-right text-xs font-bold focus:outline-none focus:border-[#b49436]">
+                                </div>
+                                <div class="flex justify-between items-center pt-1.5 border-t border-amber-200/60 text-xs">
+                                    <span class="text-gray-600 font-medium">Kembalian:</span>
+                                    <span id="cashKembalianDisplay" class="font-black text-amber-800">Rp 0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center bg-[#f8f9fa] p-2.5 rounded-xl border border-gray-200/60">
+                            <span class="text-xs text-gray-500 font-medium">Total Tagihan:</span>
+                            <span id="cartTotal" class="text-base font-black text-gray-800">Rp 0</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="eksekusiBayar('BELUM BAYAR')" class="w-full bg-[#fff4e5] border border-[#ffe0b2] text-amber-800 font-bold py-3 rounded-xl text-[11px] transition">⏳ PENDING</button>
+                            <button onclick="eksekusiBayar('SUDAH BAYAR')" class="w-full bg-[#b49436] hover:bg-[#967a2a] text-white font-black py-3 rounded-xl text-[11px] transition shadow-md">⚡ LUNAS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: DAFTAR ANTRIAN PENDING -->
+            <div id="viewPending" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-5xl w-full space-y-4 mx-auto">
+                <div class="flex justify-between items-center border-b border-gray-200 pb-3">
+                    <h2 class="text-base font-black text-amber-800">⏳ Antrian Pending & Pesanan QR Meja</h2>
+                    <button onclick="muatAntrianPending()" class="bg-white border border-gray-300 shadow-sm px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700">🔄 Refresh</button>
+                </div>
+                <div id="listPendingContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- VIEW 3: LAPORAN -->
+            <div id="viewLaporan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-7xl w-full space-y-6 mx-auto">
+                <div class="flex justify-between items-center border-b border-gray-200 pb-3">
+                    <h2 class="text-base font-black text-gray-800">📊 Laporan Ringkasan Cloud Owner</h2>
+                    <button onclick="muatDataLaporan()" class="bg-[#b49436] text-white shadow-sm px-4 py-2 rounded-xl text-xs font-bold transition">🔄 Ambil Data</button>
+                </div>
+                <div id="restrictedOwnerPanel" class="space-y-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"><span class="text-[10px] text-gray-400 font-bold block mb-1">OMZET BRUTO</span><span id="repGross" class="text-base font-black text-[#b49436]">Rp 0</span></div>
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"><span class="text-[10px] text-gray-400 font-bold block mb-1">TOTAL CASH</span><span id="repCash" class="text-base font-black text-gray-800">Rp 0</span></div>
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"><span class="text-[10px] text-gray-400 font-bold block mb-1">TOTAL QRIS</span><span id="repQris" class="text-base font-black text-gray-800">Rp 0</span></div>
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"><span class="text-[10px] text-gray-400 font-bold block mb-1">TRANSAKSI</span><span id="repTotalTx" class="text-base font-black text-emerald-600">- Tx</span></div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-[#f1f3f5] text-gray-600 border-b border-gray-200 font-bold"><th class="p-3">NAMA MENU</th><th class="p-3 text-center">TERJUAL</th><th class="p-3 text-right">NET OMZET</th></tr></thead><tbody id="tableOwnerReport" class="divide-y divide-gray-100"></tbody></table>
+                    </div>
+                </div>
+                <div id="restrictedKasirNotice" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 text-center"><p class="text-sm font-bold text-red-700">🚫 Akses khusus untuk Owner saja.</p></div>
+            </div>
+
+            <!-- VIEW 4: KEAMANAN -->
+            <div id="viewKeamanan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-xl w-full mx-auto">
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md text-center space-y-4">
+                    <h2 class="text-base font-black text-red-700">⚙️ BRUTE FORCE SECURITY SYSTEM</h2>
+                    <button onclick="resetBlokirKasir()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl text-xs">🔓 RESET COUNTER LOGIN</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylknHB6vB8rv3b5AryDK8LBotsRcwnbmudYf7CQsJ04Jp7FxpliZZcv6w2O_gZMFaG/exec'; 
+
+        let produk = []; let cart = []; let currentCategory = "Semua";
+        let currentMethod = "CASH"; let currentUser = null; let totalBelanjaGlobal = 0;
+        let lokalOmzet = 0; let lokalQty = 0;
+
+        window.onload = function() {
+            generateNewQueueNumber();
+            setInterval(() => {
+                if (currentUser) {
+                    sinkronisasiStok();
+                }
+            }, 15000);
+        };
+
+        function generateNewQueueNumber() {
+            const num = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('orderQueueNumber').innerText = `P-${num}`;
+            document.getElementById('inputAtasNamaPelanggan').value = "";
+            document.getElementById('labelAtasNama').innerText = "👤 Walk-In Customer";
+            resetKalkulator();
+        }
+
+        function resetKalkulator() {
+            document.getElementById('cashDiterimaInput').value = "";
+            document.getElementById('cashKembalianDisplay').innerText = "Rp 0";
+        }
+
+        function hitungKembalian() {
+            const uangMasuk = parseFloat(document.getElementById('cashDiterimaInput').value) || 0;
+            const kembalian = uangMasuk - totalBelanjaGlobal;
+            const display = document.getElementById('cashKembalianDisplay');
+            if (kembalian < 0) {
+                display.innerText = "Uang kurang!"; display.className = "font-black text-red-600";
+            } else {
+                display.innerText = `Rp ${kembalian.toLocaleString('id-ID')}`; display.className = "font-black text-emerald-700";
+            }
+        }
+
+        async function prosesLogin() {
+            const u = document.getElementById('usernameInput').value.trim();
+            const p = document.getElementById('passwordInput').value.trim();
+            const labelLoading = document.getElementById('loginLoading');
+            const labelError = document.getElementById('loginError');
+
+            if (!u || !p) return alert("Harap isi bidang!");
+            labelLoading.classList.remove('hidden'); labelError.classList.add('hidden');
+            let attempts = parseInt(localStorage.getItem('loginAttempts')) || 0;
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getUsers`);
+                const users = await response.json();
+                const userValid = users.find(user => user.username.toLowerCase() === u.toLowerCase() && user.password.toString() === p);
+
+                if (userValid) {
+                    if (userValid.role.toLowerCase() === 'owner') localStorage.setItem('loginAttempts', 0);
+                    if (attempts >= 3 && userValid.role.toLowerCase() !== 'owner') {
+                        labelLoading.classList.add('hidden');
+                        labelError.innerText = "🚫 Sesi terkunci. Hubungi Owner."; labelError.classList.remove('hidden');
+                        return;
+                    }
+                    localStorage.setItem('loginAttempts', 0);
+                    currentUser = userValid;
+                    labelLoading.classList.add('hidden');
+                    masukAplikasi();
+                } else {
+                    attempts++; localStorage.setItem('loginAttempts', attempts);
+                    labelLoading.classList.add('hidden');
+                    labelError.innerText = attempts >= 3 ? "🚫 Sesi Terkunci!" : `❌ Kredensial Salah! Sisa: ${3 - attempts}x`;
+                    labelError.classList.remove('hidden');
+                }
+            } catch (e) { labelLoading.classList.add('hidden'); alert("Koneksi gagal!"); }
+        }
+
+        function masukAplikasi() {
+            document.getElementById('loginGate').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userActiveDisplay').innerText = `Kasir: ${currentUser.nama_kasir}`;
+            document.getElementById('roleBadge').innerText = currentUser.role;
+
+            if (currentUser.role.toLowerCase() === 'owner') {
+                document.getElementById('navKeamanan').classList.remove('hidden');
+                switchView('laporan');
+            } else {
+                document.getElementById('navKeamanan').classList.add('hidden');
+                switchView('kasir');
+            }
+            sinkronisasiStok();
+        }
+
+        function switchView(view) {
+            ['viewKasir', 'viewPending', 'viewLaporan', 'viewKeamanan'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['navKasir', 'navPending', 'navLaporan', 'navKeamanan'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).className = "flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap";
+            });
+            
+            const activeBtn = document.getElementById('nav' + view.charAt(0).toUpperCase() + view.slice(1));
+            if(activeBtn) activeBtn.className = "flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 bg-[#b49436] text-white font-bold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap shadow-sm";
+
+            if (view === 'kasir') { document.getElementById('viewKasir').classList.remove('hidden'); renderKatalog(); }
+            else if (view === 'pending') { document.getElementById('viewPending').classList.remove('hidden'); muatAntrianPending(); }
+            else if (view === 'laporan') {
+                document.getElementById('viewLaporan').classList.remove('hidden');
+                if (currentUser.role.toLowerCase() === 'owner') {
+                    document.getElementById('restrictedOwnerPanel').classList.remove('hidden');
+                    document.getElementById('restrictedKasirNotice').classList.add('hidden');
+                    muatDataLaporan();
+                } else {
+                    document.getElementById('restrictedOwnerPanel').classList.add('hidden');
+                    document.getElementById('restrictedKasirNotice').classList.remove('hidden');
+                }
+            } else if (view === 'keamanan') { document.getElementById('viewKeamanan').classList.remove('hidden'); }
+        }
+
+        async function sinkronisasiStok() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getStokMenu`);
+                if (response.ok) { produk = await response.json(); renderKatalog(); }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderKatalog() {
+            const grid = document.getElementById('gridKatalog');
+            if(!grid) return;
+            const search = document.getElementById('searchMenu').value.toLowerCase();
+            grid.innerHTML = "";
+
+            produk.forEach(p => {
+                if (currentCategory !== "Semua" && p.category !== currentCategory) return;
+                if (search && !p.name.toLowerCase().includes(search)) return;
+                const isHabis = p.stock <= 0;
+                
+                grid.innerHTML += `
+                    <div onclick="${isHabis ? '' : `addToCart(${p.id})`}" class="bg-white rounded-xl p-2.5 border ${isHabis ? 'border-red-200 bg-red-50/20 opacity-60' : 'border-gray-200 hover:border-[#b49436] cursor-pointer shadow-sm'} flex flex-col justify-between transition">
+                        <div class="aspect-square w-full rounded-lg bg-gray-50 flex items-center justify-center mb-2 overflow-hidden border border-gray-100">
+                            <img src="${p.image || ''}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23aaa\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M12 6v6m0 0v6m0-6h6m-6 0H6\'/></svg>'}" alt="${p.name}">
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-[11px] text-gray-800 line-clamp-2">${p.name}</h5>
+                            <div class="flex justify-between items-center mt-1.5 pt-1 border-t border-gray-50">
+                                <span class="text-[#b49436] text-[11px] font-black">Rp ${parseInt(p.price).toLocaleString('id-ID')}</span>
+                                <span class="text-[9px] bg-gray-100 px-1 py-0.5 rounded text-gray-500 font-bold">Stok:${p.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterKategori(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = btn.innerText.includes(cat) ? "cat-btn bg-[#b49436] text-white px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition shadow-sm" : "cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition";
+            });
+            renderKatalog();
+        }
+
+        function addToCart(id) {
+            const item = produk.find(p => p.id === id);
+            const inCart = cart.find(c => c.id === id);
+            if (inCart) {
+                if (inCart.qty >= item.stock) return alert("Stok limit!");
+                inCart.qty++;
+            } else { cart.push({ ...item, qty: 1 }); }
+            updateCart();
+        }
+
+        function updateQty(id, delta) {
+            const item = cart.find(c => c.id === id);
+            const master = produk.find(p => p.id === id);
+            if (delta > 0 && item.qty >= master.stock) return alert("Stok limit!");
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
+            updateCart();
+        }
+
+        function updateCart() {
+            const container = document.getElementById('cartItems');
+            container.innerHTML = ""; let total = 0, count = 0;
+
+            cart.forEach(c => {
+                total += c.price * c.qty; count += c.qty;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-[#f8f9fa] p-2 rounded-xl border border-gray-200">
+                        <div class="max-w-[60%]"><span class="block font-bold text-xs text-gray-800 truncate">${c.name}</span><span class="block text-[10px] text-[#b49436] font-bold">Rp ${(c.price * c.qty).toLocaleString('id-ID')}</span></div>
+                        <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1 shadow-sm">
+                            <button onclick="updateQty(${c.id}, -1)" class="w-4 h-4 flex text-xs font-bold text-gray-500 items-center justify-center">-</button>
+                            <span class="text-xs font-bold text-gray-800">${c.qty}</span>
+                            <button onclick="updateQty(${c.id}, 1)" class="w-4 h-4 flex text-xs font-bold text-gray-500 items-center justify-center">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            totalBelanjaGlobal = total;
+            document.getElementById('cartTotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+            document.getElementById('cartCount').innerText = count;
+            hitungKembalian();
+        }
+
+        function setMethod(method) {
+            currentMethod = method;
+            const cb = document.getElementById('kalkulatorCashBox');
+            document.getElementById('payCASH').className = method === 'CASH' ? "bg-[#2d3748] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm" : "bg-white text-gray-600 border border-gray-300 font-bold py-2 rounded-xl text-xs transition";
+            document.getElementById('payQRIS').className = method === 'QRIS' ? "bg-[#2d3748] text-white font-bold py-2 rounded-xl text-xs transition shadow-sm" : "bg-white text-gray-600 border border-gray-300 font-bold py-2 rounded-xl text-xs transition";
+            if (method === 'CASH') cb.classList.remove('hidden'); else cb.classList.add('hidden');
+        }
+
+        async function eksekusiBayar(statusPembayaran) {
+            if (cart.length === 0) return alert("Pilih produk!");
+            let pelangganInput = document.getElementById('inputAtasNamaPelanggan').value.trim();
+            if (!pelangganInput) {
+                pelangganInput = prompt("Masukkan Nama Pelanggan / Nomor Meja:");
+                if (!pelangganInput || pelangganInput.trim() === "") return alert("Nama wajib diisi!");
+                document.getElementById('inputAtasNamaPelanggan').value = pelangganInput;
+            }
+
+            let total = totalBelanjaGlobal; const qNum = document.getElementById('orderQueueNumber').innerText;
+
+            if (statusPembayaran === 'SUDAH BAYAR') {
+                lokalOmzet += total; lokalQty += cart.reduce((sum, item) => sum + item.qty, 0);
+                document.getElementById('kasirLiveOmzet').innerText = `Rp ${lokalOmzet.toLocaleString('id-ID')}`;
+                document.getElementById('kasirLiveQty').innerText = `${lokalQty} Item`;
+                triggerThermalPrinter(qNum, total, currentMethod, currentUser.nama_kasir, pelangganInput);
+            }
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'simpanTransaksi', noAntrian: qNum, namaKasir: currentUser.nama_kasir,
+                        totalPay: total, metode: statusPembayaran === 'BELUM BAYAR' ? 'PENDING' : currentMethod,
+                        statusBayar: statusPembayaran, atasNama: pelangganInput, items: cart
+                    })
+                });
+                alert(`Sukses menyimpan data [${statusPembayaran}]`);
+                cart = []; updateCart(); generateNewQueueNumber(); sinkronisasiStok();
+            } catch (err) { console.error(err); }
+        }
+
+        async function muatAntrianPending() {
+            const container = document.getElementById('listPendingContainer');
+            container.innerHTML = "<p class='text-gray-500 text-xs animate-pulse col-span-2'>Mengambil antrian live...</p>";
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getPendingOrders`);
+                if (response.ok) {
+                    const data = await response.json(); container.innerHTML = "";
+                    if(data.length === 0) { container.innerHTML = "<p class='text-gray-500 text-xs py-4 col-span-2 text-center'>👍 Antrian bersih.</p>"; return; }
+                    
+                    data.forEach(order => {
+                        let itemHtml = "";
+                        order.items.forEach(i => { itemHtml += `<div class="text-gray-600 text-[11px] flex justify-between bg-white px-2 py-0.5 rounded border border-gray-100"><span>🔹 ${i.name}</span><b>${i.qty}x</b></div>`; });
+                        const isFromQR = order.noAntrian.startsWith("QR-");
+
+                        container.innerHTML += `
+                            <div class="bg-white p-4 rounded-xl border ${isFromQR ? 'border-emerald-300 bg-emerald-50/20' : 'border-gray-200'} shadow-sm flex flex-col justify-between gap-3">
+                                <div class="flex justify-between items-start border-b border-gray-100 pb-2">
+                                    <div>
+                                        <span class="block font-black text-xs text-gray-800">Antrian: ${order.noAntrian}</span>
+                                        <span class="text-[11px] text-[#b49436] font-bold block">👤 ${order.atasNama}</span>
+                                        ${isFromQR ? '<span class="text-[9px] text-emerald-600 font-bold block mt-1">📱 SCAN QR MEJA MANDIRI</span>' : ''}
+                                    </div>
+                                    <span class="text-xs font-black text-gray-800">Rp ${parseInt(order.total).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div class="space-y-1 max-h-24 overflow-y-auto bg-gray-50 p-1.5 rounded-lg">${itemHtml}</div>
+                                <button onclick="lanjutkanTransaksi('${order.noAntrian}', '${order.atasNama}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})" class="w-full bg-[#b49436] text-white font-bold py-2 rounded-xl text-xs">
+                                    🚀 Ambil Transaksi & Bayar Lunas
+                                </button>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (e) { container.innerHTML = "<p class='text-red-500 text-xs col-span-2'>Gagal memuat.</p>"; }
+        }
+
+        function lanjutkanTransaksi(noAntrian, atasNama, items) {
+            cart = [];
+            items.forEach(item => {
+                const masterProduct = produk.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+                if (masterProduct) cart.push({ ...masterProduct, qty: item.qty });
+                else cart.push({ id: Math.random(), name: item.name, price: item.price, qty: item.qty, stock: 999, category: 'Semua' });
+            });
+            document.getElementById('orderQueueNumber').innerText = noAntrian;
+            document.getElementById('inputAtasNamaPelanggan').value = atasNama;
+            document.getElementById('labelAtasNama').innerText = "👤 " + atasNama;
+            updateCart(); switchView('kasir');
+        }
+
+        function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
+            const pWin = window.open('', '_blank', 'width=320,height=620');
+            const now = new Date();
+            const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            let itemRows = "";
+            cart.forEach(i => {
+                itemRows += `<div style="display:flex; justify-content:space-between; font-size:12px;"><span>${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}</span><span>${(i.price * i.qty).toLocaleString('id-ID')}</span></div><div style="font-size:12px; font-weight:bold; margin-bottom:6px;">${i.name}</div>`;
+            });
+            pWin.document.write(`<html><body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:10px;"><div style="text-align:center;"><h4>ANGKRINGAN K-LOUNGE</h4></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="font-size:11px;"><div>No Antrian : ${qNum}</div><div>Pelanggan  : ${customerName.toUpperCase()}</div><div>Waktu : ${formattedDate}</div><div>Kasir : ${cashierName.toUpperCase()}</div></div><div style="border-top:1px dashed #000; margin:6px 0;"></div>${itemRows}\n<div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>TOTAL (${payType})</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="text-align:center; margin-top:10px;"><h3>*** LUNAS ***</h3></div><script>window.onload = function(){ window.print(); window.close(); }<\/script></body></html>`);
+            pWin.document.close();
+        }
+
+        /* PERBAIKAN FUNGSIONAL SINKRONISASI AKTIF: MENGISI TOTAL KOTAK ATAS DAN SIDEBAR KIRI */
+        async function muatDataLaporan() {
+            const tbody = document.getElementById('tableOwnerReport');
+            tbody.innerHTML = "<tr><td colspan='3' class='p-3 text-center text-gray-400'>Menghitung rekap cloud...</td></tr>";
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getLaporanRingkasan`);
+                if (response.ok) {
+                    const rep = await response.json();
+                    let gross = parseInt(rep.totalOmzet) || 0;
+                    let cashTotal = parseInt(rep.cash) || 0;
+                    let qrisTotal = parseInt(rep.qris) || 0;
+                    let txCount = parseInt(rep.jumlahTransaksi) || 0;
+                    let totalItemCloud = 0;
+
+                    if (gross === 0 && rep.rekapMenu && Object.keys(rep.rekapMenu).length > 0) {
+                        Object.keys(rep.rekapMenu).forEach(key => {
+                            gross += parseInt(rep.rekapMenu[key].netOmzet) || 0;
+                        });
+                        cashTotal = gross; 
+                    }
+
+                    if (rep.rekapMenu && Object.keys(rep.rekapMenu).length > 0) {
+                        Object.keys(rep.rekapMenu).forEach(key => {
+                            totalItemCloud += parseInt(rep.rekapMenu[key].terjual) || 0;
+                        });
+                    }
+
+                    // Sinkronisasi data ke tampilan utama panel laporan atas
+                    document.getElementById('repGross').innerText = `Rp ${gross.toLocaleString('id-ID')}`;
+                    document.getElementById('repCash').innerText = `Rp ${cashTotal.toLocaleString('id-ID')}`;
+                    document.getElementById('repQris').innerText = `Rp ${qrisTotal.toLocaleString('id-ID')}`;
+                    document.getElementById('repTotalTx').innerText = `${txCount === 0 && gross > 0 ? 'Aktif' : txCount + ' Tx'}`;
+
+                    // UPDATE BARU: Sinkronisasi data real-time langsung ke bagian "Sesi Malam Ini" di sidebar kiri
+                    document.getElementById('kasirLiveOmzet').innerText = `Rp ${gross.toLocaleString('id-ID')}`;
+                    document.getElementById('kasirLiveQty').innerText = `${totalItemCloud} Item`;
+
+                    lokalOmzet = gross;
+                    lokalQty = totalItemCloud;
+
+                    tbody.innerHTML = "";
+                    Object.keys(rep.rekapMenu).forEach(menuName => {
+                        let m = rep.rekapMenu[menuName];
+                        tbody.innerHTML += `<tr class="border-b border-gray-100"><td class="p-3 font-bold text-gray-800">${menuName}</td><td class="p-3 text-center text-[#b49436] font-extrabold">${m.terjual || 0} Item</td><td class="p-3 text-right text-gray-900 font-black">Rp ${(m.netOmzet || 0).toLocaleString('id-ID')}</td></tr>`;
+                    });
+                }
+            } catch (e) { tbody.innerHTML = "<tr><td colspan='3' class='p-3 text-center text-red-500'>Gagal sinkronisasi data cloud.</td></tr>"; }
+        }
+
+        function resetBlokirKasir() { localStorage.setItem('loginAttempts', 0); alert("Reset sukses!"); }
+        function logout() { currentUser = null; document.getElementById('mainApp').classList.add('hidden'); document.getElementById('loginGate').classList.remove('hidden'); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Menu Self-Service - Angkringan K-Lounge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #f4f4f7; }
+        ::-webkit-scrollbar-thumb { background: #c4a446; border-radius: 10px; }
+        
+        button, input { touch-action: manipulation; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-[#f8f9fa] text-[#2d3748] font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-[#c4a446] selection:text-white">
+
+    <!-- HEADER BANNER -->
+    <header class="bg-[#1e2530] text-white p-4 text-center shadow-md sticky top-0 z-50">
+        <h1 class="font-black text-sm sm:text-base tracking-wider text-[#e5c158]">ANGKRINGAN K-LOUNGE</h1>
+        <p class="text-[9px] sm:text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">Silakan Pilih & Pesan Mandiri Dari Meja</p>
+    </header>
+
+    <!-- MAIN GRID CONTAINER (Mendukung Potret, Lanskap, Tablet & Komputer) -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-7xl w-full mx-auto pb-44 lg:pb-0">
+        
+        <!-- KOLOM UTAMA: KATALOG MENU (KIRI / ATAS) -->
+        <div class="flex-1 p-3 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+            
+            <!-- PENCARIAN LIVE -->
+            <div class="flex justify-between items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-200">
+                <div class="relative w-full">
+                    <input type="text" id="searchMenu" oninput="renderKatalog()" placeholder="Cari makanan atau minuman kesukaanmu..." class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl pl-3 pr-8 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#b49436]">
+                    <span class="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm">🔍</span>
+                </div>
+            </div>
+            
+            <!-- KATEGORI PILIHAN (Slide Horizontal Lancar di Layar Sentuh) -->
+            <div class="flex gap-1.5 overflow-x-auto pb-2 border-b border-gray-200 no-scrollbar">
+                <button onclick="filterKategori('Semua')" class="cat-btn bg-[#b49436] text-white px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition shadow-sm">🎯 Semua</button>
+                <button onclick="filterKategori('Sate')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🍢 Sate</button>
+                <button onclick="filterKategori('Cemilan')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🍟 Cemilan</button>
+                <button onclick="filterKategori('Makanan')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🍛 Makanan</button>
+                <button onclick="filterKategori('Kopi')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition">☕ Kopi</button>
+                <button onclick="filterKategori('Non Kopi')" class="cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🥤 Non Kopi</button>
+            </div>
+            
+            <!-- GRID PRODUK RESPONSIF (2 Kolom di HP Potret, 3-4 Kolom di Lanskap/Tablet/PC) -->
+            <div id="gridKatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+        </div>
+
+        <!-- KOLOM KEDUA: KERANJANG BELANJA (KANAN jika PC/Tablet, STICKY DRAWER BAWAH jika HP Potret) -->
+        <div class="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-300 p-4 flex flex-col justify-between shadow-[0_-8px_30px_rgba(0,0,0,0.08)] lg:shadow-xl z-40 max-h-[40vh] lg:max-h-none">
+            
+            <!-- AREA DAFTAR BELANJA (Scrollable) -->
+            <div class="flex flex-col flex-1 overflow-hidden">
+                <h4 class="font-black text-xs text-gray-800 tracking-wide flex items-center gap-1.5 mb-2 pb-1.5 border-b border-gray-100">
+                    🛒 KERANJANG SAYA
+                    <span id="cartCount" class="bg-[#b49436] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                </h4>
+                
+                <div id="cartItems" class="space-y-2 overflow-y-auto mb-2 pr-1 flex-1"></div>
+            </div>
+            
+            <!-- DATA DIRI & CHECKOUT PANEL -->
+            <div class="border-t border-gray-100 pt-2 space-y-2 bg-white">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                    <div>
+                        <label class="block text-[9px] text-gray-400 font-bold mb-0.5 uppercase tracking-wider">Nama / Nomor Meja</label>
+                        <input type="text" id="inputAtasNama" placeholder="Contoh: Meja 3 - Doni" class="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 font-bold focus:outline-none focus:border-[#b49436]">
+                    </div>
+                    <div class="flex justify-between items-center bg-[#f8f9fa] px-3 py-2 rounded-xl border border-gray-200/60">
+                        <span class="text-xs text-gray-500 font-medium">Total:</span>
+                        <span id="cartTotal" class="text-sm sm:text-base font-black text-gray-800">Rp 0</span>
+                    </div>
+                </div>
+                
+                <button onclick="kirimKeKasir()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 sm:py-3 rounded-xl text-xs tracking-wider transition shadow-md flex items-center justify-center gap-2">
+                    🚀 KIRIM PESANAN KE KASIR
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylknHB6vB8rv3b5AryDK8LBotsRcwnbmudYf7CQsJ04Jp7FxpliZZcv6w2O_gZMFaG/exec'; 
+
+        let produk = [];
+        let cart = [];
+        let currentCategory = "Semua";
+        let totalBelanja = 0;
+
+        window.onload = function() {
+            ambilStokCloud();
+            setInterval(ambilStokCloud, 20000);
+        };
+
+        async function ambilStokCloud() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getStokMenu`);
+                if (response.ok) {
+                    produk = await response.json();
+                    renderKatalog();
+                }
+            } catch (err) { console.error("Gagal sync stok:", err); }
+        }
+
+        function renderKatalog() {
+            const grid = document.getElementById('gridKatalog');
+            if(!grid) return;
+            const search = document.getElementById('searchMenu').value.toLowerCase();
+            grid.innerHTML = "";
+
+            produk.forEach(p => {
+                if (currentCategory !== "Semua" && p.category !== currentCategory) return;
+                if (search && !p.name.toLowerCase().includes(search)) return;
+                const isHabis = p.stock <= 0;
+                
+                grid.innerHTML += `
+                    <div onclick="${isHabis ? '' : `addToCart(${p.id})`}" class="bg-white rounded-xl p-2.5 border ${isHabis ? 'border-red-200 bg-red-50/20 opacity-50' : 'border-gray-200 hover:border-[#b49436] cursor-pointer shadow-sm'} flex flex-col justify-between relative transition duration-150">
+                        <div class="aspect-square w-full rounded-lg bg-gray-50 flex items-center justify-center mb-2 overflow-hidden border border-gray-100">
+                            <img src="${p.image || ''}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23aaa\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M12 6v6m0 0v6m0-6h6m-6 0H6\'/></svg>'}" alt="${p.name}">
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-[11px] text-gray-800 line-clamp-2">${p.name}</h5>
+                            <div class="flex justify-between items-center mt-1.5 pt-1 border-t border-gray-50">
+                                <span class="text-[#b49436] text-[11px] font-black">Rp ${parseInt(p.price).toLocaleString('id-ID')}</span>
+                                <span class="text-[9px] bg-gray-100 px-1 py-0.5 rounded text-gray-500 font-bold">${isHabis ? 'Habis' : 'Stok:'+p.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterKategori(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = btn.innerText.includes(cat) ? "cat-btn bg-[#b49436] text-white px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition shadow-sm" : "cat-btn bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition";
+            });
+            renderKatalog();
+        }
+
+        function addToCart(id) {
+            const item = produk.find(p => p.id === id);
+            const inCart = cart.find(c => c.id === id);
+            if (inCart) {
+                if (inCart.qty >= item.stock) return alert("Stok menu yang tersisa sudah habis dipesan!");
+                inCart.qty++;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            updateCart();
+        }
+
+        function updateQty(id, delta) {
+            const item = cart.find(c => c.id === id);
+            const master = produk.find(p => p.id === id);
+            if (delta > 0 && item.qty >= master.stock) return alert("Stok tidak mencukupi!");
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
+            updateCart();
+        }
+
+        function updateCart() {
+            const container = document.getElementById('cartItems');
+            if(!container) return;
+            container.innerHTML = "";
+            let total = 0, count = 0;
+
+            cart.forEach(c => {
+                total += c.price * c.qty;
+                count += c.qty;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-[#f8f9fa] p-2 rounded-xl border border-gray-200">
+                        <div class="max-w-[65%]">
+                            <span class="block font-bold text-xs text-gray-800 truncate">${c.name}</span>
+                            <span class="block text-[10px] text-[#b49436] font-bold">Rp ${(c.price * c.qty).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1 shadow-sm">
+                            <button onclick="updateQty(${c.id}, -1)" class="w-4 h-4 flex items-center justify-center text-xs text-gray-500 font-bold">-</button>
+                            <span class="text-xs font-bold text-gray-800">${c.qty}</span>
+                            <button onclick="updateQty(${c.id}, 1)" class="w-4 h-4 flex items-center justify-center text-xs text-gray-500 font-bold">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            totalBelanja = total;
+            document.getElementById('cartTotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+            document.getElementById('cartCount').innerText = count;
+        }
+
+        async function kirimKeKasir() {
+            if (cart.length === 0) return alert("Keranjang belanjaanmu masih kosong!");
+            const namaInput = document.getElementById('inputAtasNama').value.trim();
+            if (!namaInput) return alert("Nama / Nomor Meja wajib diisi untuk memproses pesanan!");
+
+            const qCode = "QR-" + Math.floor(1000 + Math.random() * 9000);
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'simpanTransaksi',
+                        noAntrian: qCode,
+                        namaKasir: "Self-Service QR",
+                        totalPay: totalBelanja,
+                        metode: 'PENDING',
+                        statusBayar: 'BELUM BAYAR',
+                        atasNama: namaInput,
+                        items: cart
+                    })
+                });
+
+                alert(`🎉 PESANAN BERHASIL TERKIRIM!\nKode Antrian Anda: ${qCode}\nSilakan merapat ke kasir atas nama "${namaInput}" jika ingin langsung membayar.`);
+                cart = [];
+                updateCart();
+                document.getElementById('inputAtasNama').value = "";
+            } catch (err) {
+                alert("Jaringan sibuk, silakan klik kirim kembali.");
+            }
+        }
+    </script>
+</body>
+</html>
