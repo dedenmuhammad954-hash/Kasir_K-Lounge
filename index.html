@@ -67,7 +67,7 @@
                         📊 <span>Laporan Omzet</span>
                     </button>
                     <button id="navKeamanan" onclick="switchView('keamanan')" class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 text-gray-300 hover:bg-gray-800 font-semibold px-4 py-3 rounded-xl text-xs transition whitespace-nowrap hidden">
-                        ⚙️ <span>Security</span>
+                        ⚙️ <span>Security & Struk</span>
                     </button>
                 </nav>
             </div>
@@ -197,11 +197,68 @@
                 <div id="restrictedKasirNotice" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 text-center"><p class="text-sm font-bold text-red-700">🚫 Akses khusus untuk Owner saja.</p></div>
             </div>
 
-            <!-- VIEW 4: KEAMANAN -->
-            <div id="viewKeamanan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-xl w-full mx-auto">
-                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md text-center space-y-4">
-                    <h2 class="text-base font-black text-red-700">⚙️ BRUTE FORCE SECURITY SYSTEM</h2>
-                    <button onclick="resetBlokirKasir()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl text-xs">🔓 RESET COUNTER LOGIN</button>
+            <!-- VIEW 4: KEAMANAN & EDIT STRUK MODUL -->
+            <div id="viewKeamanan" class="p-4 sm:p-6 flex-1 overflow-y-auto hidden max-w-2xl w-full mx-auto space-y-4">
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-md space-y-4">
+                    <h2 class="text-sm font-black text-[#b49436] tracking-wide uppercase border-b pb-2">📋 PENGATURAN KATA-KATA & LOGO STRUK TOKO</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        
+                        <!-- UPLOAD FOTO LOGO ASLI (.PNG / .JPG) -->
+                        <div class="sm:col-span-2 bg-amber-50/50 border border-amber-200 p-3 rounded-xl flex flex-col sm:flex-row gap-3 items-center justify-between">
+                            <div>
+                                <label class="block text-amber-900 font-black uppercase text-[10px]">🖼️ Upload Foto Logo (.png / .jpg)</label>
+                                <p class="text-[10px] text-gray-500">Pilih file logo transparan hitam-putih agar tajam saat dicetak.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="file" id="cfgFileLogo" accept="image/*" onchange="handleLogoUpload(this)" class="hidden">
+                                <button onclick="document.getElementById('cfgFileLogo').click()" class="bg-[#b49436] text-white px-3 py-2 rounded-xl text-[10px] font-bold">Pilih File Foto</button>
+                                <button onclick="hapusLogoFoto()" class="bg-red-100 text-red-700 px-2 py-2 rounded-xl text-[10px] font-bold">Hapus</button>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Preview Gambar Ter-input (Maks 200px lebar printer)</label>
+                            <div class="bg-gray-50 border border-dashed rounded-xl p-3 flex justify-center items-center h-24 overflow-hidden">
+                                <img id="imgLogoPreview" class="max-h-20 max-w-[200px] object-contain hidden" alt="Logo Preview">
+                                <span id="txtNoLogoPreview" class="text-gray-400 text-[11px]">Belum ada file foto yang dipilih.</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Nama Toko Utama</label>
+                            <input type="text" id="cfgNamaToko" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Alamat Lengkap</label>
+                            <input type="text" id="cfgAlamat" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Nomor Telepon</label>
+                            <input type="text" id="cfgTelp" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl font-bold">
+                        </div>
+                        <div class="sm:col-span-2 border-t pt-2 mt-2">
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Kata Puitis Bawah (Baris 1)</label>
+                            <input type="text" id="cfgPuitis1" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Kata Puitis Bawah (Baris 2)</label>
+                            <input type="text" id="cfgPuitis2" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Kata Puitis Bawah (Baris 3)</label>
+                            <input type="text" id="cfgPuitis3" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-gray-400 font-bold mb-1 uppercase text-[10px]">Kalimat Penutup Akhir</label>
+                            <input type="text" id="cfgPenutup" class="w-full bg-[#f8f9fa] border p-2.5 rounded-xl">
+                        </div>
+                    </div>
+                    <button onclick="simpanConfigStrukMandiri()" class="w-full bg-[#b49436] text-white font-bold py-2.5 rounded-xl text-xs shadow-sm">💾 SIMPAN CONFIG STRUK</button>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-md text-center space-y-2">
+                    <h2 class="text-xs font-black text-red-700 uppercase">🛡️ SECURITY SYSTEM</h2>
+                    <button onclick="resetBlokirKasir()" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-xs">🔓 RESET COUNTER LOGIN KASIR</button>
                 </div>
             </div>
         </main>
@@ -214,12 +271,85 @@
         let currentMethod = "CASH"; let currentUser = null; let totalBelanjaGlobal = 0;
         let lokalOmzet = 0; let lokalQty = 0;
         let bluetoothCharacteristic = null;
+        let base64LogoFotoData = ""; // Penampung string biner base64 gambar logo toko
 
         window.onload = function() {
             generateNewQueueNumber();
             cekPerangkatUntukBluetoothButton();
+            muatConfigStrukAwal();
             setInterval(() => { if (currentUser) sinkronisasiStok(); }, 15000);
         };
+
+        // ENCODER FOTO KELAS KASIR: Proses konversi foto .png/.jpg ke memori internal
+        function handleLogoUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Skala rasio lebar printer thermal portabel 58mm
+                    const maxW = 200;
+                    const scale = maxW / img.width;
+                    canvas.width = maxW;
+                    canvas.height = img.height * scale;
+                    
+                    // Render kompresi
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    base64LogoFotoData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Update preview box visual
+                    const view = document.getElementById('imgLogoPreview');
+                    view.src = base64LogoFotoData;
+                    view.classList.remove('hidden');
+                    document.getElementById('txtNoLogoPreview').classList.add('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function hapusLogoFoto() {
+            base64LogoFotoData = "";
+            document.getElementById('imgLogoPreview').classList.add('hidden');
+            document.getElementById('txtNoLogoPreview').classList.remove('hidden');
+            localStorage.removeItem('s_base64_logo');
+        }
+
+        function muatConfigStrukAwal() {
+            document.getElementById('cfgNamaToko').value = localStorage.getItem('s_nama') || "ANGKRINGAN K-LOUNGE";
+            document.getElementById('cfgAlamat').value = localStorage.getItem('s_alamat') || "Wisata Situ Ciburuy";
+            document.getElementById('cfgTelp').value = localStorage.getItem('s_telp') || "62895608831055";
+            document.getElementById('cfgPuitis1').value = localStorage.getItem('s_p1') || "Kopi habis bisa pesan lagi,";
+            document.getElementById('cfgPuitis2').value = localStorage.getItem('s_p2') || "Kalau dia hilang jangan di paksa";
+            document.getElementById('cfgPuitis3').value = localStorage.getItem('s_p3') || "kembali";
+            document.getElementById('cfgPenutup').value = localStorage.getItem('s_penutup') || "Terimakasih sudah menjadi bagian dari Angkringan K-Lounge";
+            
+            base64LogoFotoData = localStorage.getItem('s_base64_logo') || "";
+            if (base64LogoFotoData) {
+                const view = document.getElementById('imgLogoPreview');
+                view.src = base64LogoFotoData;
+                view.classList.remove('hidden');
+                document.getElementById('txtNoLogoPreview').classList.add('hidden');
+            }
+        }
+
+        function simpanConfigStrukMandiri() {
+            localStorage.setItem('s_nama', document.getElementById('cfgNamaToko').value);
+            localStorage.setItem('s_alamat', document.getElementById('cfgAlamat').value);
+            localStorage.setItem('s_telp', document.getElementById('cfgTelp').value);
+            localStorage.setItem('s_p1', document.getElementById('cfgPuitis1').value);
+            localStorage.setItem('s_p2', document.getElementById('cfgPuitis2').value);
+            localStorage.setItem('s_p3', document.getElementById('cfgPuitis3').value);
+            localStorage.setItem('s_penutup', document.getElementById('cfgPenutup').value);
+            if (base64LogoFotoData) {
+                localStorage.setItem('s_base64_logo', base64LogoFotoData);
+            }
+            alert("✅ Pengaturan Teks & Gambar Logo Struk Berhasil Disimpan!");
+        }
 
         function cekPerangkatUntukBluetoothButton() {
             const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -517,26 +647,84 @@
             updateCart(); switchView('kasir');
         }
 
-        /* PERBAIKAN STRUKTUR FINAL SINKRONISASI DAN PENATAAN KERTAS UNTUK BLUETOOTH HP */
+        // FUNGSI PENDUKUNG MATRIKS GAMBAR: Merubah file biner Base64 gambar ke Format Command ESC/POS Printer Thermal Bluetooth
+        function dapatkanBinerCommandPrinterDariBase64(base64Str, callback) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                const binerBaris = [];
+                // Format inisialisasi cetak gambar ESC/POS: GS v 0 p xL xH yL yH
+                const xL = Math.floor(canvas.width / 8) % 256;
+                const xH = Math.floor(Math.floor(canvas.width / 8) / 256);
+                const yL = canvas.height % 256;
+                const yH = Math.floor(canvas.height / 256);
+                
+                // Header command gambar printer thermal portabel
+                binerBaris.push(29, 118, 48, 0, xL, xH, yL, yH);
+
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < Math.floor(canvas.width / 8); x++) {
+                        let byteKertas = 0;
+                        for (let bit = 0; bit < 8; bit++) {
+                            const pixelX = x * 8 + bit;
+                            const index = (y * canvas.width + pixelX) * 4;
+                            const r = imgData.data[index];
+                            const g = imgData.data[index+1];
+                            const b = imgData.data[index+2];
+                            const kegelapan = (r + g + b) / 3;
+                            if (kegelapan < 128) { // Jika pixel gelap, aktifkan jarum printer hitam
+                                byteKertas |= (1 << (7 - bit));
+                            }
+                        }
+                        binerBaris.push(byteKertas);
+                    }
+                }
+                // Tambahkan enter line feed setelah gambar selesai
+                binerBaris.push(10, 10);
+                callback(new Uint8Array(binerBaris));
+            };
+            img.src = base64Str;
+        }
+
+        /* INTEGRASI MODUL FINAL: CETAK STRUK ADAPTIF DENGAN UPLOAD FOTO LOGO ASLI */
         async function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             
-            // Perbaikan penangkapan data nominal kalkulator cash
             const uangDiterima = currentMethod === 'QRIS' ? total : (parseFloat(document.getElementById('cashDiterimaInput').value) || total);
             const kembalian = uangDiterima - total;
 
-            // 1. SINKRONISASI STRUKTUR TEKS MURNI UNTUK BLUETOOTH HP (MONOSPACE)
+            const txtNamaToko = localStorage.getItem('s_nama') || "ANGKRINGAN K-LOUNGE";
+            const txtAlamat = localStorage.getItem('s_alamat') || "Wisata Situ Ciburuy";
+            const txtTelp = localStorage.getItem('s_telp') || "62895608831055";
+            const txtP1 = localStorage.getItem('s_p1') || "Kopi habis bisa pesan lagi,";
+            const txtP2 = localStorage.getItem('s_p2') || "Kalau dia hilang jangan di paksa";
+            const txtP3 = localStorage.getItem('s_p3') || "kembali";
+            const txtPenutup = localStorage.getItem('s_penutup') || "Terimakasih sudah menjadi bagian dari Angkringan K-Lounge";
+
+            // FORMAT TEXT DETAIL BELANJA UNTUK HP
             let itemRowsText = "";
             cart.forEach(i => {
                 itemRowsText += `${i.name}\n  ${String(i.qty).padEnd(2)} x ${parseInt(i.price).toLocaleString('id-ID').padEnd(7)} = ${String(parseInt(i.price * i.qty).toLocaleString('id-ID')).padStart(13)}\n`;
             });
 
-            let teksStrukMentah = 
-                `       [ LOGO K-LOUNGE ]        \n` +
-                `      ANGKRINGAN K-LOUNGE        \n` +
-                `      Wisata Situ Ciburuy        \n` +
-                `        62895608831055           \n` +
+            const centerText = (text) => {
+                const len = text.length;
+                if (len >= 33) return text.substring(0, 33) + "\n";
+                const pad = Math.floor((33 - len) / 2);
+                return " ".repeat(pad) + text + "\n";
+            };
+
+            let teksStrukMentahTanpaLogo = 
+                centerText(txtNamaToko) +
+                centerText(txtAlamat) +
+                centerText(txtTelp) +
                 `---------------------------------\n` +
                 `No Antrian : ${qNum.padEnd(20)}\n` +
                 `Pelanggan  : ${customerName.toUpperCase().padEnd(20)}\n` +
@@ -551,11 +739,10 @@
                 `---------------------------------\n` +
                 `Metode Bayar (${payType.padEnd(4)})     Rp${parseInt(total).toLocaleString('id-ID')}\n\n` +
                 `              LUNAS              \n\n` +
-                `    Kopi habis bisa pesan lagi,  \n` +
-                ` Kalau dia hilang jangan di paksa\n` +
-                `             kembali             \n\n` +
-                `Terimakasih sudah menjadi bagian \n` +
-                `    dari Angkringan K-Lounge     \n\n\n\n`;
+                (txtP1 ? centerText(txtP1) : "") +
+                (txtP2 ? centerText(txtP2) : "") +
+                (txtP3 ? centerText(txtP3) : "") + `\n` +
+                centerText(txtPenutup) + "\n\n\n\n";
 
             const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -565,19 +752,36 @@
                     return;
                 }
                 try {
-                    const encoder = new TextEncoder();
-                    const binerData = encoder.encode(teksStrukMentah);
+                    const textEncoder = new TextEncoder();
                     const chunk = 20;
-                    for (let i = 0; i < binerData.length; i += chunk) {
-                        await bluetoothCharacteristic.writeValue(binerData.slice(i, i + chunk));
+
+                    // JIKA ADA FILE FOTO LOGO: Proses cetak gambar matriks biner terlebih dahulu
+                    if (base64LogoFotoData) {
+                        dapatkanBinerCommandPrinterDariBase64(base64LogoFotoData, async function(bytesGambar) {
+                            // Kirim pecahan biner gambar logo
+                            for (let i = 0; i < bytesGambar.length; i += chunk) {
+                                await bluetoothCharacteristic.writeValue(bytesGambar.slice(i, i + chunk));
+                            }
+                            // Lanjutkan kirim teks rincian struk belanja
+                            const binerTeks = textEncoder.encode(teksStrukMentahTanpaLogo);
+                            for (let i = 0; i < binerTeks.length; i += chunk) {
+                                await bluetoothCharacteristic.writeValue(binerTeks.slice(i, i + chunk));
+                            }
+                        });
+                    } else {
+                        // Jika tidak upload foto, langsung tembak teks struk biasa
+                        const binerTeks = textEncoder.encode(teksStrukMentahTanpaLogo);
+                        for (let i = 0; i < binerTeks.length; i += chunk) {
+                            await bluetoothCharacteristic.writeValue(binerTeks.slice(i, i + chunk));
+                        }
                     }
                 } catch (e) {
-                    alert("Koneksi printer terputus, harap sambungkan ulang.");
+                    alert("Koneksi printer terputus.");
                     bluetoothCharacteristic = null;
                     document.getElementById('btnConnectBluetooth').innerText = "🔌 Hubungkan Printer HP";
                 }
             } else {
-                // 2. STRUKTUR UNTUK DRIVER LAPTOP (HTML/CSS)
+                // TAMPILAN DRIVER PRINT UNTUK JENDELA LAPTOP
                 const pWin = window.open('', '_blank', 'width=320,height=620');
                 let itemRowsHtml = "";
                 cart.forEach(i => {
@@ -592,11 +796,11 @@
                 pWin.document.write(`
                     <html>
                     <body style="font-family:'Courier New',monospace; width:250px; margin:0 auto; padding:10px; color:#000;">
-                        <div style="text-align:center; font-size:13px;">
-                            <div style="font-weight:bold; font-size:11px; margin-bottom:2px;">[ LOGO K-LOUNGE ]</div>
-                            <b style="font-size:14px;">ANGKRINGAN K-LOUNGE</b><br>
-                            Wisata Situ Ciburuy<br>
-                            62895608831055
+                        <div style="text-align:center; font-size:13px; line-height:1.3;">
+                            ${base64LogoFotoData ? `<img src="${base64LogoFotoData}" style="max-width:140px; margin-bottom:8px; filter:grayscale(100%);"><br>` : ''}
+                            <b style="font-size:14px;">${txtNamaToko}</b><br>
+                            ${txtAlamat}<br>
+                            ${txtTelp}
                         </div>
                         <div style="border-top:1px dashed #000; margin:6px 0;"></div>
                         <div style="font-size:11px; line-height:1.4;">
@@ -617,13 +821,12 @@
                         <div style="text-align:center; margin-top:15px; font-size:13px; font-weight:bold;">LUNAS</div>
                         
                         <div style="text-align:center; margin-top:12px; font-size:11px; line-height:1.3;">
-                            Kopi habis bisa pesan lagi,<br>
-                            Kalau dia hilang jangan di paksa<br>
-                            kembali
+                            ${txtP1 ? txtP1 + '<br>' : ''}
+                            ${txtP2 ? txtP2 + '<br>' : ''}
+                            ${txtP3 ? txtP3 : ''}
                         </div>
                         <div style="text-align:center; margin-top:12px; font-size:11px; line-height:1.3;">
-                            Terimakasih sudah menjadi bagian<br>
-                            dari Angkringan K-Lounge
+                            ${txtPenutup}
                         </div>
                         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
                     </body>
