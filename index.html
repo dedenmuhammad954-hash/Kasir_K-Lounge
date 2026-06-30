@@ -518,9 +518,16 @@
 
             const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-            if (isMobileDevice) {
-                window.location.href = "rawbt:base64," + b64EncodeUnicode(teksStrukMentah);
-            } else {
+           if (isMobileDevice) {
+        // JIKA DI HP: Gunakan metode download file teks (Aman dari blokir izin Android)
+        const element = document.createElement("a");
+        const file = new Blob([teksStrukMentah], {type: 'text/plain'});
+        element.href = URL.createObjectURL(file);
+        element.download = `struk-${qNum}.txt`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    } else {
                 const pWin = window.open('', '_blank', 'width=320,height=620');
                 let itemRowsHtml = "";
                 cart.forEach(i => {
