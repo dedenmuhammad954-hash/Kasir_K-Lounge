@@ -489,19 +489,54 @@
             updateCart(); switchView('kasir');
         }
 
+        /* MODIFIKASI TERKINI: SISTEM CETAK ADAPTIF UNTUK HP (RAWBT) & LAPORAN CLOUD SINKRON */
         function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
-            const pWin = window.open('', '_blank', 'width=320,height=620');
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            let itemRows = "";
+
+            let itemRowsText = "";
             cart.forEach(i => {
-                itemRows += `<div style="display:flex; justify-content:space-between; font-size:12px;"><span>${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}</span><span>${(i.price * i.qty).toLocaleString('id-ID')}</span></div><div style="font-size:12px; font-weight:bold; margin-bottom:6px;">${i.name}</div>`;
+                itemRowsText += `${i.name}\n${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')} = ${(i.price * i.qty).toLocaleString('id-ID')}\n`;
             });
-            pWin.document.write(`<html><body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:10px;"><div style="text-align:center;"><h4>ANGKRINGAN K-LOUNGE</h4></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="font-size:11px;"><div>No Antrian : ${qNum}</div><div>Pelanggan  : ${customerName.toUpperCase()}</div><div>Waktu : ${formattedDate}</div><div>Kasir : ${cashierName.toUpperCase()}</div></div><div style="border-top:1px dashed #000; margin:6px 0;"></div>${itemRows}\n<div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>TOTAL (${payType})</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="text-align:center; margin-top:10px;"><h3>*** LUNAS ***</h3></div><script>window.onload = function(){ window.print(); window.close(); }<\/script></body></html>`);
-            pWin.document.close();
+
+            let teksStrukMentah = 
+                `   ANGKRINGAN K-LOUNGE   \n` +
+                `  Premium Culinary Spot   \n` +
+                `--------------------------\n` +
+                `No Antrian : ${qNum}\n` +
+                `Pelanggan  : ${customerName.toUpperCase()}\n` +
+                `Waktu      : ${formattedDate}\n` +
+                `Kasir      : ${cashierName.toUpperCase()}\n` +
+                `--------------------------\n` +
+                itemRowsText +
+                `--------------------------\n` +
+                `TOTAL (${payType}) : Rp ${total.toLocaleString('id-ID')}\n` +
+                `--------------------------\n` +
+                `        *** LUNAS *** \n` +
+                ` Terima kasih atas \n` +
+                `   kunjungan Anda   \n\n\n`;
+
+            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            if (isMobileDevice) {
+                window.location.href = "rawbt:base64," + b64EncodeUnicode(teksStrukMentah);
+            } else {
+                const pWin = window.open('', '_blank', 'width=320,height=620');
+                let itemRowsHtml = "";
+                cart.forEach(i => {
+                    itemRowsHtml += `<div style="display:flex; justify-content:space-between; font-size:12px;"><span>${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}</span><span>${(i.price * i.qty).toLocaleString('id-ID')}</span></div><div style="font-size:12px; font-weight:bold; margin-bottom:6px;">${i.name}</div>`;
+                });
+                pWin.document.write(`<html><body style="font-family:'Courier New',monospace; width:240px; margin:0 auto; padding:10px;"><div style="text-align:center;"><h4>ANGKRINGAN K-LOUNGE</h4></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="font-size:11px;"><div>No Antrian : ${qNum}</div><div>Pelanggan  : ${customerName.toUpperCase()}</div><div>Waktu : ${formattedDate}</div><div>Kasir : ${cashierName.toUpperCase()}</div></div><div style="border-top:1px dashed #000; margin:6px 0;"></div>${itemRowsHtml}<div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>TOTAL (${payType})</span><span>Rp ${total.toLocaleString('id-ID')}</span></div><div style="border-top:1px dashed #000; margin:6px 0;"></div><div style="text-align:center; margin-top:10px;"><h3>*** LUNAS ***</h3></div><script>window.onload = function(){ window.print(); window.close(); }<\/script></body></html>`);
+                pWin.document.close();
+            }
         }
 
-        /* PERBAIKAN FUNGSIONAL SINKRONISASI AKTIF: MENGISI TOTAL KOTAK ATAS DAN SIDEBAR KIRI */
+        function b64EncodeUnicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+
         async function muatDataLaporan() {
             const tbody = document.getElementById('tableOwnerReport');
             tbody.innerHTML = "<tr><td colspan='3' class='p-3 text-center text-gray-400'>Menghitung rekap cloud...</td></tr>";
@@ -528,13 +563,11 @@
                         });
                     }
 
-                    // Sinkronisasi data ke tampilan utama panel laporan atas
                     document.getElementById('repGross').innerText = `Rp ${gross.toLocaleString('id-ID')}`;
                     document.getElementById('repCash').innerText = `Rp ${cashTotal.toLocaleString('id-ID')}`;
                     document.getElementById('repQris').innerText = `Rp ${qrisTotal.toLocaleString('id-ID')}`;
                     document.getElementById('repTotalTx').innerText = `${txCount === 0 && gross > 0 ? 'Aktif' : txCount + ' Tx'}`;
 
-                    // UPDATE BARU: Sinkronisasi data real-time langsung ke bagian "Sesi Malam Ini" di sidebar kiri
                     document.getElementById('kasirLiveOmzet').innerText = `Rp ${gross.toLocaleString('id-ID')}`;
                     document.getElementById('kasirLiveQty').innerText = `${totalItemCloud} Item`;
 
