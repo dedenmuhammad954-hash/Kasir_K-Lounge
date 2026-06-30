@@ -517,20 +517,23 @@
             updateCart(); switchView('kasir');
         }
 
-        /* PERBAIKAN FITUR: FUNGSI CETAK ADAPTIF LOGO & STRUKTUR SESUAI PEMBAHASAN */
+        /* PERBAIKAN STRUKTUR FINAL SINKRONISASI DAN PENATAAN KERTAS UNTUK BLUETOOTH HP */
         async function triggerThermalPrinter(qNum, total, payType, cashierName, customerName) {
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            const uangDiterima = parseFloat(document.getElementById('cashDiterimaInput').value) || total;
+            
+            // Perbaikan penangkapan data nominal kalkulator cash
+            const uangDiterima = currentMethod === 'QRIS' ? total : (parseFloat(document.getElementById('cashDiterimaInput').value) || total);
             const kembalian = uangDiterima - total;
 
-            // 1. STRUKTUR FORMAT UTK PRINTER HP (TEXT MONOSPACE MURNI VIA BLUETOOTH)
+            // 1. SINKRONISASI STRUKTUR TEKS MURNI UNTUK BLUETOOTH HP (MONOSPACE)
             let itemRowsText = "";
             cart.forEach(i => {
                 itemRowsText += `${i.name}\n  ${String(i.qty).padEnd(2)} x ${parseInt(i.price).toLocaleString('id-ID').padEnd(7)} = ${String(parseInt(i.price * i.qty).toLocaleString('id-ID')).padStart(13)}\n`;
             });
 
             let teksStrukMentah = 
+                `       [ LOGO K-LOUNGE ]        \n` +
                 `      ANGKRINGAN K-LOUNGE        \n` +
                 `      Wisata Situ Ciburuy        \n` +
                 `        62895608831055           \n` +
@@ -572,10 +575,9 @@
                     alert("Koneksi printer terputus, harap sambungkan ulang.");
                     bluetoothCharacteristic = null;
                     document.getElementById('btnConnectBluetooth').innerText = "🔌 Hubungkan Printer HP";
-                    document.getElementById('btnConnectBluetooth').className = "bg-emerald-600 text-white border border-transparent px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1";
                 }
             } else {
-                // 2. STRUKTUR FORMAT UTK LAPTOP (HTML/CSS LENGKAP DENGAN GRAFIS LOGO ATAS)
+                // 2. STRUKTUR UNTUK DRIVER LAPTOP (HTML/CSS)
                 const pWin = window.open('', '_blank', 'width=320,height=620');
                 let itemRowsHtml = "";
                 cart.forEach(i => {
@@ -591,7 +593,6 @@
                     <html>
                     <body style="font-family:'Courier New',monospace; width:250px; margin:0 auto; padding:10px; color:#000;">
                         <div style="text-align:center; font-size:13px;">
-                            <!-- Canvas Mockup Penahan Spasi Logo Asli K-Lounge -->
                             <div style="font-weight:bold; font-size:11px; margin-bottom:2px;">[ LOGO K-LOUNGE ]</div>
                             <b style="font-size:14px;">ANGKRINGAN K-LOUNGE</b><br>
                             Wisata Situ Ciburuy<br>
