@@ -557,39 +557,18 @@
             } catch (e) { console.log("Gagal sinkron laporan"); }
         }
 
+        // 🚀 VERSI AUTOMATIC DIRECT PRINT: LANGSUNG PRINT KE BLUETOOTH TANPA PREVIEW JIKA TERKONEKSI
         function triggerThermalPrinter(qNum, total, payType, cashierName, customerName, subtotalVal, valDiskon, tDiskon, ketDiskon, targetCart) {
-            const pWin = window.open('', '_blank', 'width=320,height=650');
             const now = new Date();
             const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             const uangDiterima = payType === 'QRIS' ? total : (parseFloat(document.getElementById('cashDiterimaInput').value) || total);
             const kembalian = Math.max(0, uangDiterima - total);
 
-            let itemRowsHtml = "";
-            targetCart.forEach(i => {
-                itemRowsHtml += `
-                    <div style="font-size:12px; margin-top:3px; text-align:left;">${i.name}</div>
-                    <div style="display:flex; justify-content:space-between; font-size:12px; padding-left:10px; margin-bottom:2px;">
-                        <span style="flex:1; text-align:left;">  ${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}  =</span>
-                        <span style="text-align:right; min-width:80px;">${(i.price * i.qty).toLocaleString('id-ID')}</span>
-                    </div>`;
-            });
-
-            let diskonHtml = "";
-            if (valDiskon > 0) {
-                let pot = tDiskon === 'persen' ? (subtotalVal * (valDiskon / 100)) : valDiskon;
-                diskonHtml = `
-                    <div style="display:flex; justify-content:space-between; font-size:12px;">
-                        <span style="flex:1; text-align:left;">Subtotal</span><span>: ${subtotalVal.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:12px; color:red;">
-                        <span style="flex:1; text-align:left;">Diskon (${ketDiskon || 'Promo'})</span><span>: -${pot.toLocaleString('id-ID')}</span>
-                    </div>`;
-            }
-
+            // 1. SUSUN TEKS MURNI UNTUK DIRECT PRINT BLUETOOTH DENGAN LAYOUT YANG SAMA PERSIS
             let formatResiKertasBT = 
-                `ANGKRINGAN K-LOUNGE\n` +
-                `Wisata Situ Ciburuy\n` +
-                `62895608831055\n` +
+                `      ANGKRINGAN K-LOUNGE       \n` +
+                `      Wisata Situ Ciburuy      \n` +
+                `         62895608831055         \n` +
                 `--------------------------------\n` +
                 `No Antrian: ${qNum}\n` +
                 `Pelanggan : ${customerName.toUpperCase()}\n` +
@@ -597,58 +576,107 @@
                 `Kasir     : ${cashierName.toUpperCase()}\n` +
                 `--------------------------------\n`;
 
-            pWin.document.write(`
-                <html>
-                <body style="font-family:'Courier New', monospace; width:260px; margin:0 auto; padding:5px; color:#000;">
-                    <div style="text-align:center; font-size:13px; font-weight:bold; line-height:1.2;">
-                        ANGKRINGAN K-LOUNGE<br>Wisata Situ Ciburuy<br>62895608831055
-                    </div>
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    
-                    <table style="font-size:12px; width:100%; border-collapse:collapse; line-height:1.3;">
-                        <tr><td style="width:85px; text-align:left; vertical-align:top;">No Antrian</td><td style="vertical-align:top;">: ${qNum}</td></tr>
-                        <tr><td style="text-align:left; vertical-align:top;">Pelanggan</td><td style="vertical-align:top;">: ${customerName.toUpperCase()}</td></tr>
-                        <tr><td style="text-align:left; vertical-align:top;">Waktu</td><td style="vertical-align:top;">: ${formattedDate}</td></tr>
-                        <tr><td style="text-align:left; vertical-align:top;">Kasir</td><td style="vertical-align:top;">: ${cashierName.toUpperCase()}</td></tr>
-                    </table>
-                    
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    ${itemRowsHtml}
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    
-                    ${diskonHtml}
-                    
-                    <table style="font-size:12px; width:100%; border-collapse:collapse; line-height:1.4;">
-                        <tr><td style="text-align:left;">Total Tagihan</td><td style="text-align:right;">: ${total.toLocaleString('id-ID')}</td></tr>
-                        <tr><td style="text-align:left;">Uang Diterima</td><td style="text-align:right;">: ${uangDiterima.toLocaleString('id-ID')}</td></tr>
-                        <tr><td style="text-align:left;">Kembalian</td><td style="text-align:right;">: ${kembalian.toLocaleString('id-ID')}</td></tr>
-                    </table>
-                    <br>
-                    <div style="display:flex; justify-content:space-between; font-size:12px;">
-                        <span>Metode Bayar : (${payType})</span>
-                        <span style="font-weight:bold;">Rp${total.toLocaleString('id-ID')}</span>
-                    </div>
-                    
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    <div style="text-align:center; margin:8px 0; font-size:12px; font-weight:bold; letter-spacing:2px;">LUNAS</div>
-                    
-                    <div style="text-align:center; font-size:11px; line-height:1.3; margin-top:10px;">
-                        Kopi habis bisa pesan lagi,<br>Kalau dia hilang jangan di<br>paksa kembali
-                        <br><br>
-                        Terimakasih Sudah Menjadi<br>Bagian dari K-Lounge
-                    </div>
-                    <div style="border-top:1px dashed #000; margin-top:10px;"></div>
-                    <script>window.onload = function(){ window.print(); window.close(); }<\/script>
-                </body>
-                </html>`);
-            
-            pWin.document.close();
+            targetCart.forEach(i => {
+                formatResiKertasBT += `${i.name}\n  ${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')} = ${(i.price * i.qty).toLocaleString('id-ID')}\n`;
+            });
 
-            try {
-                targetCart.forEach(i => { formatResiKertasBT += `${i.name}\n  ${i.qty} x ${i.price} = ${i.price * i.qty}\n`; });
-                formatResiKertasBT += `--------------------------------\nTotal Tagihan : ${total.toLocaleString('id-ID')}\n--- LUNAS (${payType}) ---`;
+            formatResiKertasBT += `--------------------------------\n`;
+
+            if (valDiskon > 0) {
+                let pot = tDiskon === 'persen' ? (subtotalVal * (valDiskon / 100)) : valDiskon;
+                formatResiKertasBT += `Subtotal      : ${subtotalVal.toLocaleString('id-ID')}\n`;
+                formatResiKertasBT += `Diskon (${ketDiskon || 'Promo'}): -${pot.toLocaleString('id-ID')}\n`;
+                formatResiKertasBT += `--------------------------------\n`;
+            }
+
+            formatResiKertasBT += `Total Tagihan : ${total.toLocaleString('id-ID')}\n`;
+            formatResiKertasBT += `Uang Diterima : ${uangDiterima.toLocaleString('id-ID')}\n`;
+            formatResiKertasBT += `Kembalian     : ${kembalian.toLocaleString('id-ID')}\n\n`;
+            formatResiKertasBT += `Metode Bayar : (${payType}) Rp${total.toLocaleString('id-ID')}\n`;
+            formatResiKertasBT += `--------------------------------\n`;
+            formatResiKertasBT += `             LUNAS              \n\n`;
+            formatResiKertasBT += `  Kopi habis bisa pesan lagi,\br  Kalau dia hilang jangan di\n         paksa kembali          \n\n`;
+            formatResiKertasBT += `   Terimakasih Sudah Menjadi    \n      Bagian dari K-Lounge      \n`;
+            formatResiKertasBT += `--------------------------------\n`;
+
+            // 2. LOGIKA IF-ELSE PENGALIHAN CETAK KASIR
+            if (btCharacteristic) {
+                // JIKA BLUETOOTH TERHUBUNG: Langsung tembak data ke printer murni tanpa pop-up review browser
                 kirimDataKeBluetoothThermal(formatResiKertasBT);
-            } catch(e) { console.log(e); }
+                console.log("Struk berhasil dicetak langsung via Bluetooth Hardware.");
+            } else {
+                // JIKA BLUETOOTH TIDAK TERHUBUNG: Gunakan jendela pop-up browser lama sebagai BACKUP cadangan
+                const pWin = window.open('', '_blank', 'width=320,height=650');
+                
+                let itemRowsHtml = "";
+                targetCart.forEach(i => {
+                    itemRowsHtml += `
+                        <div style="font-size:12px; margin-top:3px; text-align:left;">${i.name}</div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; padding-left:10px; margin-bottom:2px;">
+                            <span style="flex:1; text-align:left;">  ${i.qty} x ${parseInt(i.price).toLocaleString('id-ID')}  =</span>
+                            <span style="text-align:right; min-width:80px;">${(i.price * i.qty).toLocaleString('id-ID')}</span>
+                        </div>`;
+                });
+
+                let diskonHtml = "";
+                if (valDiskon > 0) {
+                    let pot = tDiskon === 'persen' ? (subtotalVal * (valDiskon / 100)) : valDiskon;
+                    diskonHtml = `
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span style="flex:1; text-align:left;">Subtotal</span><span>: ${subtotalVal.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; color:red;">
+                            <span style="flex:1; text-align:left;">Diskon (${ketDiskon || 'Promo'})</span><span>: -${pot.toLocaleString('id-ID')}</span>
+                        </div>`;
+                }
+
+                pWin.document.write(`
+                    <html>
+                    <body style="font-family:'Courier New', monospace; width:260px; margin:0 auto; padding:5px; color:#000;">
+                        <div style="text-align:center; font-size:13px; font-weight:bold; line-height:1.2;">
+                            ANGKRINGAN K-LOUNGE<br>Wisata Situ Ciburuy<br>62895608831055
+                        </div>
+                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+                        
+                        <table style="font-size:12px; width:100%; border-collapse:collapse; line-height:1.3;">
+                            <tr><td style="width:85px; text-align:left; vertical-align:top;">No Antrian</td><td style="vertical-align:top;">: ${qNum}</td></tr>
+                            <tr><td style="text-align:left; vertical-align:top;">Pelanggan</td><td style="vertical-align:top;">: ${customerName.toUpperCase()}</td></tr>
+                            <tr><td style="text-align:left; vertical-align:top;">Waktu</td><td style="vertical-align:top;">: ${formattedDate}</td></tr>
+                            <tr><td style="text-align:left; vertical-align:top;">Kasir</td><td style="vertical-align:top;">: ${cashierName.toUpperCase()}</td></tr>
+                        </table>
+                        
+                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+                        ${itemRowsHtml}
+                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+                        
+                        ${diskonHtml}
+                        
+                        <table style="font-size:12px; width:100%; border-collapse:collapse; line-height:1.4;">
+                            <tr><td style="text-align:left;">Total Tagihan</td><td style="text-align:right;">: ${total.toLocaleString('id-ID')}</td></tr>
+                            <tr><td style="text-align:left;">Uang Diterima</td><td style="text-align:right;">: ${uangDiterima.toLocaleString('id-ID')}</td></tr>
+                            <tr><td style="text-align:left;">Kembalian</td><td style="text-align:right;">: ${kembalian.toLocaleString('id-ID')}</td></tr>
+                        </table>
+                        <br>
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span>Metode Bayar : (${payType})</span>
+                            <span style="font-weight:bold;">Rp${total.toLocaleString('id-ID')}</span>
+                        </div>
+                        
+                        <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+                        <div style="text-align:center; margin:8px 0; font-size:12px; font-weight:bold; letter-spacing:2px;">LUNAS</div>
+                        
+                        <div style="text-align:center; font-size:11px; line-height:1.3; margin-top:10px;">
+                            Kopi habis bisa pesan lagi,<br>Kalau dia hilang jangan di<br>paksa kembali
+                            <br><br>
+                            Terimakasih Sudah Menjadi<br>Bagian dari K-Lounge
+                        </div>
+                        <div style="border-top:1px dashed #000; margin-top:10px;"></div>
+                        <script>window.onload = function(){ window.print(); window.close(); }<\/script>
+                    </body>
+                    </html>`);
+                
+                pWin.document.close();
+            }
         }
 
         function logout() { location.reload(); }
