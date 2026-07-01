@@ -251,11 +251,24 @@
             }
         }
 
+        // 🛠️ PERBAIKAN TOTAL: SISTEM CHUNKING (POTONG DATA PER 20 BYTES) AGAR PRINTER TIDAK MACET
         async function kirimDataKeBluetoothThermal(text) {
             if (!btCharacteristic) return;
             const encoder = new TextEncoder();
-            const bytes = encoder.encode(text + "\n\n\n");
-            await btCharacteristic.writeValue(bytes);
+            const bytes = encoder.encode(text + "\n\n\n\n"); // Tambah spasi kertas di akhir
+            
+            const CHUNK_SIZE = 20; // Ukuran standar memori printer thermal mini
+            let offset = 0;
+
+            // Kirim potongan data secara bertahap dengan jeda waktu singkat
+            while (offset < bytes.length) {
+                const chunk = bytes.slice(offset, offset + CHUNK_SIZE);
+                await btCharacteristic.writeValue(chunk);
+                offset += CHUNK_SIZE;
+                
+                // Berikan jeda 30 milidetik agar memori printer tidak penuh/hang
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
         }
 
         async function ambilNomorAntreanBaruDariCloud() {
